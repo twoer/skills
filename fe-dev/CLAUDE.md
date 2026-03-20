@@ -11,6 +11,7 @@
 - 自动生成研发规范配置（ESLint、Prettier、Stylelint）
 - 内置 useHttp composable 和示例 service
 - Feature 工作流管理（需求同步、开发计划、测试记录）
+- UI 设计稿转代码（MasterGo → design-spec → Vue 页面）
 - OpenAPI 规范同步生成 TypeScript 类型和 Service
 
 ## 文件结构
@@ -33,14 +34,20 @@ fe-dev/
 │   ├── feat-gen/SKILL.md         # /fe-dev:feat-gen — 生成开发/测试计划
 │   ├── feat-exec/SKILL.md        # /fe-dev:feat-exec — 执行开发任务
 │   ├── feat-update/SKILL.md      # /fe-dev:feat-update — 需求变更管理
-│   └── spec/SKILL.md             # /fe-dev:spec — OpenAPI 同步
+│   ├── spec/SKILL.md             # /fe-dev:spec — OpenAPI 同步
+│   ├── ui/SKILL.md               # /fe-dev:ui — 设计稿列表
+│   ├── ui-add/SKILL.md           # /fe-dev:ui-add — 设计稿分析
+│   ├── ui-gen/SKILL.md           # /fe-dev:ui-gen — 代码生成
+│   ├── ui-update/SKILL.md        # /fe-dev:ui-update — 设计稿更新
+│   └── ui-check/SKILL.md         # /fe-dev:ui-check — 质量检查
 ├── scripts/
 │   └── init-nuxt4-element.sh     # Element Plus 初始化脚本
-├── templates/                    # feat-new 使用的文档模板
+├── templates/                    # feat-new 和 ui 使用的模板
 ├── docs/                         # 分析和适配文档
 └── references/
     ├── element-setup.md           # Element Plus 配置参考
-    └── feat-utils.md             # Feature 共享工具
+    ├── feat-utils.md             # Feature 共享工具
+    └── ui-utils.md               # UI Skill 共享工具
 ```
 
 ## 使用方式

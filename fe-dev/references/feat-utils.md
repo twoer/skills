@@ -72,6 +72,16 @@ docs/features/feat-{name}/
     └── review.md         # 代码审查
 ```
 
+UI 目录结构（`ui/` 位于 feat 目录内）：
+
+```
+docs/features/feat-{name}/
+└── ui/                      # UI 设计稿转换
+    ├── ui-pages.json        # 页面注册表
+    └── specs/               # 设计规格文档
+        └── {pageId}-spec.md
+```
+
 ## 状态枚举
 
 ```typescript

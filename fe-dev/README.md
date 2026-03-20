@@ -38,6 +38,16 @@
 | `/fe-dev:feat-done <name>` | 标记功能完成 |
 | `/fe-dev:feat-archive <name>` | 归档已完成的功能 |
 
+### UI 设计稿
+
+| 命令 | 说明 |
+|------|------|
+| `/fe-dev:ui-add <url> <name>` | 分析 MasterGo 设计稿，生成设计规格 |
+| `/fe-dev:ui-gen [page-id]` | 基于设计规格生成 Vue 页面代码 |
+| `/fe-dev:ui` | 查看设计稿转换状态 |
+| `/fe-dev:ui-update [page-id]` | 设计稿差异更新 |
+| `/fe-dev:ui-check [page-id]` | 生成代码质量检查 |
+
 ### Spec Kit
 
 | 命令 | 说明 |
@@ -90,6 +100,7 @@ npm install -g feishu-to-md-mcp
 - 自动生成研发规范配置（ESLint、Prettier、Stylelint）
 - 内置 useHttp composable 和示例 service
 - Feature 工作流管理（需求同步、开发计划、测试记录）
+- UI 设计稿转代码（MasterGo → design-spec → Vue 页面）
 - OpenAPI 规范同步生成 TypeScript 类型和 Service
 
 ## 目录结构
@@ -113,7 +124,12 @@ fe-dev/
 │   ├── feat-gen/SKILL.md         # 生成开发/测试计划（依赖 superpowers）
 │   ├── feat-exec/SKILL.md        # 执行开发任务
 │   ├── feat-update/SKILL.md      # 需求变更管理
-│   └── spec/SKILL.md             # 规范工具集（api-sync 等）
+│   ├── spec/SKILL.md             # 规范工具集（api-sync 等）
+│   ├── ui/SKILL.md               # 设计稿列表
+│   ├── ui-add/SKILL.md           # 设计稿分析
+│   ├── ui-gen/SKILL.md           # 代码生成
+│   ├── ui-update/SKILL.md        # 设计稿更新
+│   └── ui-check/SKILL.md         # 质量检查
 ├── scripts/
 │   └── init-nuxt4-element.sh
 ├── templates/
@@ -122,13 +138,16 @@ fe-dev/
 │   ├── feat-exec.md
 │   ├── feat-test.md
 │   ├── feat-review.md
-│   └── feat-links.md
+│   ├── feat-links.md
+│   ├── ui-pages.json
+│   └── design-spec.md
 ├── docs/
 │   ├── spec-kit-analysis.md
 │   └── spec-kit-adaptation.md
 └── references/
     ├── element-setup.md
-    └── feat-utils.md
+    ├── feat-utils.md
+    └── ui-utils.md
 ```
 
 ## 项目模板
