@@ -62,7 +62,29 @@
 
 ## 可选依赖
 
-fe-dev 核心功能无需额外依赖。以下两个依赖仅在特定命令中使用，未安装时对应功能会降级或跳过。
+fe-dev 核心功能无需额外依赖。以下依赖仅在特定命令中使用，未安装时对应功能会降级或跳过。
+
+### MasterGo MCP（可选）
+
+**影响命令**: `/fe-dev:ui-add`、`/fe-dev:ui-update`、`/fe-dev:ui-gen`
+
+安装 MasterGo MCP 后，支持从 MasterGo 设计稿自动提取设计信息和下载图片资源。未安装时 UI 相关命令无法使用。
+
+```bash
+npm install -g @mastergo/magic-mcp
+```
+
+在 `~/.claude/settings.json` 中添加：
+
+```json
+{
+  "mcpServers": {
+    "mastergo": {
+      "command": "magic-mcp"
+    }
+  }
+}
+```
 
 ### superpowers（可选）
 
