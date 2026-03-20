@@ -31,9 +31,10 @@
 
 ## 组件清单
 
-| 区域 | Element Plus 组件 | Tailwind 样式 | 说明 |
-|------|-------------------|--------------|------|
-| <!-- 例：搜索栏 | ElInput, ElButton | flex, gap-4 | 关键词 + 状态筛选 --> |
+| 区域 | Element Plus 组件 | EP 属性 | Tailwind 样式 | 说明 |
+|------|-------------------|---------|--------------|------|
+| <!-- 例：搜索栏 | ElInput, ElButton | size="default" | flex, gap-4 | 关键词 + 状态筛选 -->
+| <!-- 例：登录表单 | ElForm | label-position="top" | w-full | 邮箱+密码 --> |
 
 ## 字段映射
 

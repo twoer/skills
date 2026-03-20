@@ -74,8 +74,10 @@ git branch --show-current
 2. 创建 `{pageDir}/assets/images/` 目录
 3. 下载每个资源到本地，保留原始文件名；遇到同名文件时自动加序号后缀（如 `bg.png` → `bg-1.png`、`bg-2.png`）
 4. SVG 如果是纯内容（非 URL），写入 `.svg` 文件
-5. 构建路径映射表：`{远程URL或原始名} → {本地相对路径}`
-6. 如果没有图片资源，跳过此步骤
+5. **下载校验**：下载后检查文件大小或 Content-Type，确认是有效图片文件。如果文件为空或内容为错误响应（如 XML/HTML），视为下载失败
+6. **下载失败处理**：删除无效文件，在路径映射表中标记为 `{原始名} → ./assets/images/{原始名}`（占位路径），并在摘要中列出失败的资源，提示用户手动替换
+7. 构建路径映射表：`{远程URL或原始名} → {本地相对路径}`
+8. 如果没有图片资源，跳过此步骤
 
 ### 步骤 5: 生成代码
 
@@ -84,6 +86,10 @@ git branch --show-current
 图片引用规则：
 - 使用相对于 Vue 文件的本地路径：`./assets/images/logo.png`
 - 禁止引用 MasterGo 远程 URL
+
+组件属性规则：
+- 从 spec"组件清单"的 `EP 属性` 列读取属性，写入对应组件标签
+- 未记录的属性使用 Element Plus 默认值，不额外添加
 
 #### 代码结构
 
@@ -179,6 +185,7 @@ import { useXxxService } from '~/composables/useXxxService'
 🎨 新增 tokens: EP({n}) + Tailwind({n}) + SCSS({n})
 📦 使用 types: {列表}
 📦 使用 services: {列表}
+🖼️ 图片: {n} 个成功, {n} 个失败（需手动替换到 {pageDir}/assets/images/）
 ```
 
 ### 步骤 10: 自动质量检查
