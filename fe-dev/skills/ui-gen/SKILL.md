@@ -1,6 +1,7 @@
 ---
 name: ui-gen
 description: 基于设计规格生成 Vue 页面代码。触发词: "ui gen", "生成页面", "ui-gen", "设计转代码"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # UI Gen - 代码生成
@@ -60,7 +61,7 @@ git branch --show-current
 
 读取项目中已有的 CSS 变量文件（如 `assets/css/variables.css`），了解现有的 design tokens。
 
-**4e. 下载图片资源**
+### 步骤 5: 下载图片资源
 
 从设计数据中收集所有图片资源（光栅图 + SVG），下载到页面本地目录。
 
@@ -79,9 +80,37 @@ git branch --show-current
 7. 构建路径映射表：`{远程URL或原始名} → {本地相对路径}`
 8. 如果没有图片资源，跳过此步骤
 
-### 步骤 5: 生成代码
+### 步骤 6: 获取 DSL 样式数据
 
-基于 spec、项目上下文和步骤 4e 的路径映射表，生成完整的 .vue 文件。
+从 MasterGo 获取设计稿的原始 DSL 数据，提取精确的 CSS 样式信息，补充 spec 中未记录的视觉细节。
+
+1. 从 ui-pages.json 读取该页面的 `mastergo` URL
+2. 调用 getDsl 获取设计数据（调用方式同 ui-add 步骤 4，含 URL 编码重试）
+3. 遍历 DSL 节点树，按容器层级提取每个节点的关键 CSS 属性：
+
+| 类别 | 需提取的属性 |
+|------|------------|
+| 布局 | `display`, `flex-direction`, `flex-wrap`, `gap`, `justify-content`, `align-items` |
+| 尺寸 | `width`, `height`, `min-width`, `max-width`, `min-height`, `max-height` |
+| 间距 | `padding`, `margin` |
+| 排版 | `font-size`, `line-height`, `font-weight`, `color`, `text-align` |
+| 文本控制 | `white-space`, `overflow-wrap`, `word-break`, `text-overflow` |
+| 溢出 | `overflow`, `overflow-x`, `overflow-y` |
+| 视觉 | `border-radius`, `cursor`, `opacity` |
+
+4. 将 CSS 属性值转换为 Tailwind class（详见 `<skill-path>/references/ui-utils.md` 中的"CSS → Tailwind 映射"表）
+5. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
+6. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
+
+### 步骤 7: 生成代码
+
+基于 spec、项目上下文、步骤 5 的路径映射表和步骤 6 的样式映射表，生成完整的 .vue 文件。
+
+**样式来源优先级（从高到低）：**
+
+1. **EP 组件属性**（spec）— 决定组件选择和组件级 props（`label-position`、`type`、`size`）
+2. **DSL 原始样式**（步骤 6）— 决定容器的 Tailwind class（布局、间距、排版、溢出）
+3. **默认值** — 都没有时使用 Element Plus 默认值
 
 图片引用规则：
 - 使用相对于 Vue 文件的本地路径：`./assets/images/logo.png`
@@ -135,7 +164,7 @@ import { useXxxService } from '~/composables/useXxxService'
 
 详见 `<skill-path>/references/ui-utils.md` 中的"Tailwind 常用 class"表。
 
-### 步骤 6: 写入 .vue 文件
+### 步骤 8: 写入 .vue 文件
 
 写入到 spec 中指定的 target 路径（或 ui-pages.json 中的 target 字段）。
 
@@ -143,11 +172,11 @@ import { useXxxService } from '~/composables/useXxxService'
 - 提示用户确认覆盖
 - 覆盖前可选择备份原文件
 
-### 步骤 7: 处理 Design Tokens
+### 步骤 9: 处理 Design Tokens
 
 对比 spec 中的 tokens 与项目现有变量文件：
 
-**7a. Element Plus 主题 tokens**
+**9a. Element Plus 主题 tokens**
 
 搜索 `assets/css/` 下的 CSS 变量文件（如 `variables.css`、`element-variables.css`），列出每个 token 的状态：
 
@@ -163,21 +192,21 @@ import { useXxxService } from '~/composables/useXxxService'
 - 已存在且值不同 → 提示用户确认是否覆盖
 - 不存在 → 提示用户是否新增
 
-**7b. Tailwind 扩展 tokens**
+**9b. Tailwind 扩展 tokens**
 
 检查 `tailwind.config.ts` 中是否已有对应配置：
 - 已存在且值不同 → 提示用户确认
 - 不存在 → 提示用户是否新增
 
-**7c. Scoped SCSS tokens**
+**9c. Scoped SCSS tokens**
 
 页面级 tokens 直接写入 .vue 文件的 `<style>` 部分，无需确认。
 
-### 步骤 8: 更新 ui-pages.json
+### 步骤 10: 更新 ui-pages.json
 
 将页面状态更新为 `converted`，更新 `updatedAt` 时间戳。
 
-### 步骤 9: 输出摘要
+### 步骤 11: 输出摘要
 
 ```
 ✅ 页面代码已生成
@@ -188,7 +217,7 @@ import { useXxxService } from '~/composables/useXxxService'
 🖼️ 图片: {n} 个成功, {n} 个失败（需手动替换到 {pageDir}/assets/images/）
 ```
 
-### 步骤 10: 自动质量检查
+### 步骤 12: 自动质量检查
 
 代码生成完成后，**立即自动执行**质检流程（同 `/fe-dev:ui-check`）：
 

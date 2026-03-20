@@ -1,6 +1,7 @@
 ---
 name: ui-add
 description: 分析 MasterGo 设计稿，生成设计规格文档。触发词: "ui add", "添加设计稿", "设计分析", "ui-add"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # UI Add - 设计稿分析

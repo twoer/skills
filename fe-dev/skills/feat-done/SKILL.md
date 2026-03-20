@@ -1,6 +1,7 @@
 ---
 name: feat-done
 description: 标记功能完成，准备合并。触发词: "feat done", "功能完成", "标记完成"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Done - 标记功能完成

@@ -1,6 +1,7 @@
 ---
 name: feat-log
 description: 快速记录开发日志。触发词: "feat log", "开发日志", "记录日志"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Log - 记录开发日志
