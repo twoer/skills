@@ -1,0 +1,11 @@
+{
+  "accounts": {
+    "mastergo.iflytek.com": {
+      "pat": "mg_your_personal_access_token_here",
+      "noproxy": true
+    },
+    "mastergo.com": {
+      "pat": "mg_your_public_cloud_token_here"
+    }
+  }
+}

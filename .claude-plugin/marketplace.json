@@ -1,0 +1,40 @@
+{
+  "name": "twoer-skills",
+  "description": "Frontend development skills for Claude Code",
+  "owner": {
+    "name": "twoer",
+    "email": "zhangkun_net@hotmail.com"
+  },
+  "plugins": [
+    {
+      "name": "fe-dev",
+      "description": "Frontend development assistant for project initialization and feature workflow management",
+      "version": "3.2.0",
+      "source": "./fe-dev",
+      "author": {
+        "name": "twoer",
+        "email": "zhangkun_net@hotmail.com"
+      }
+    },
+{
+      "name": "net-proxy",
+      "description": "自动检测系统代理并注入 npm/pnpm install 命令",
+      "version": "1.0.1",
+      "source": "./net-proxy",
+      "author": {
+        "name": "twoer",
+        "email": "zhangkun_net@hotmail.com"
+      }
+    },
+    {
+      "name": "claude-compass",
+      "description": "团队共享规则管理，通过 symlink 实现规则的链接、同步、创建和健康检查",
+      "version": "1.0.0",
+      "source": "./claude-compass",
+      "author": {
+        "name": "twoer",
+        "email": "zhangkun_net@hotmail.com"
+      }
+    }
+  ]
+}
