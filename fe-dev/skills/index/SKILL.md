@@ -35,6 +35,16 @@ description: Frontend development assistant for project initialization and manag
 | `/fe-dev:feat-done <name>` | 标记功能完成 |
 | `/fe-dev:feat-archive <name>` | 归档已完成的功能 |
 
+### UI 设计稿
+
+| 命令 | 说明 |
+|------|------|
+| `/fe-dev:ui-add <url> <name>` | 分析 MasterGo 设计稿，生成设计规格 |
+| `/fe-dev:ui-gen [page-id]` | 基于设计规格生成 Vue 页面代码 |
+| `/fe-dev:ui` | 查看设计稿转换状态 |
+| `/fe-dev:ui-update [page-id]` | 设计稿差异更新 |
+| `/fe-dev:ui-check [page-id]` | 生成代码质量检查 |
+
 ### Spec Kit
 
 | 命令 | 说明 |
