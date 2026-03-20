@@ -60,9 +60,30 @@ git branch --show-current
 
 读取项目中已有的 CSS 变量文件（如 `assets/css/variables.css`），了解现有的 design tokens。
 
+**4e. 下载图片资源**
+
+从设计数据中收集所有图片资源（光栅图 + SVG），下载到页面本地目录。
+
+图片目录规则：`{vue文件所在目录}/assets/images/`
+
+例如 target 为 `pages/login/index.vue` → `pages/login/assets/images/`
+
+1. 从设计数据中收集图片：
+   - D2C 返回的 `data.payload.image` 中的远程 URL（光栅图）
+   - D2C 返回的 `data.payload.svg` 中的 SVG 内容
+2. 创建 `{pageDir}/assets/images/` 目录
+3. 下载每个资源到本地，保留原始文件名；遇到同名文件时自动加序号后缀（如 `bg.png` → `bg-1.png`、`bg-2.png`）
+4. SVG 如果是纯内容（非 URL），写入 `.svg` 文件
+5. 构建路径映射表：`{远程URL或原始名} → {本地相对路径}`
+6. 如果没有图片资源，跳过此步骤
+
 ### 步骤 5: 生成代码
 
-基于 spec 和项目上下文，生成完整的 .vue 文件。
+基于 spec、项目上下文和步骤 4e 的路径映射表，生成完整的 .vue 文件。
+
+图片引用规则：
+- 使用相对于 Vue 文件的本地路径：`./assets/images/logo.png`
+- 禁止引用 MasterGo 远程 URL
 
 #### 代码结构
 

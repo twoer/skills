@@ -9,6 +9,12 @@
 /plugin install fe-dev@skills
 ```
 
+## 更新
+
+```bash
+/plugin update fe-dev
+```
+
 ## 使用方式
 
 ### 项目初始化

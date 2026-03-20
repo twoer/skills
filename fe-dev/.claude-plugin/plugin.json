@@ -1,7 +1,7 @@
 {
   "name": "fe-dev",
   "description": "Frontend development assistant for project initialization and feature workflow management",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "author": {
     "name": "zhangkun",
     "email": "zhangkun_net@hotmail.com"
