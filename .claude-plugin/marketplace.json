@@ -1,0 +1,20 @@
+{
+  "name": "twoer-skills",
+  "description": "Frontend development skills for Claude Code",
+  "owner": {
+    "name": "twoer",
+    "email": "zhangkun_net@hotmail.com"
+  },
+  "plugins": [
+    {
+      "name": "fe-dev",
+      "description": "Frontend development assistant for project initialization and feature workflow management",
+      "version": "2.0.0",
+      "source": "./fe-dev",
+      "author": {
+        "name": "twoer",
+        "email": "zhangkun_net@hotmail.com"
+      }
+    }
+  ]
+}

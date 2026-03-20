@@ -1,0 +1,15 @@
+---
+name: feat-done
+description: 标记功能完成，准备合并。触发词: "feat done", "功能完成", "标记完成"
+---
+
+# Feat Done - 标记功能完成
+
+> 共享工具: `<skill-path>/references/feat-utils.md`
+
+## 执行流程
+
+1. 检查功能存在，确认当前状态为 `🚧 开发中`
+2. 检查代码提交状态（未提交则提示）
+3. 更新 index.md 状态为 `✅ 已完成`，记录完成时间
+4. 询问后续操作：创建 PR/MR 或稍后处理

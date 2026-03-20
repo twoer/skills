@@ -1,0 +1,20 @@
+{
+  "name": "fe-dev-marketplace",
+  "description": "Frontend development skills marketplace",
+  "owner": {
+    "name": "zhangkun",
+    "email": "zhangkun_net@hotmail.com"
+  },
+  "plugins": [
+    {
+      "name": "fe-dev",
+      "description": "Frontend development assistant for project initialization and feature workflow management",
+      "version": "2.0.0",
+      "source": "./",
+      "author": {
+        "name": "zhangkun",
+        "email": "zhangkun_net@hotmail.com"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "fe-dev",
+  "description": "Frontend development assistant for project initialization and feature workflow management",
+  "version": "2.0.0",
+  "author": {
+    "name": "zhangkun",
+    "email": "zhangkun_net@hotmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["frontend", "nuxt4", "vue3", "element-plus", "skills", "workflow"]
+}
