@@ -1,6 +1,7 @@
 ---
 name: feat-show
 description: 查看功能详情。触发词: "feat show", "功能详情", "查看功能"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Show - 查看功能详情

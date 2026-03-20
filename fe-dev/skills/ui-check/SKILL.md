@@ -1,6 +1,7 @@
 ---
 name: ui-check
 description: 生成代码质量检查。触发词: "ui check", "质量检查", "ui-check"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # UI Check - 质量检查

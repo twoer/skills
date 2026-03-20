@@ -1,6 +1,7 @@
 ---
 name: ui
 description: UI 设计稿管理。触发词: "ui", "ui list", "设计稿列表"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # UI - 设计稿列表

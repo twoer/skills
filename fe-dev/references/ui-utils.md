@@ -158,6 +158,97 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 | 圆角 | rounded, rounded-lg, rounded-xl, rounded-2xl |
 | 阴影 | shadow, shadow-sm, shadow-md, shadow-lg |
 
+### CSS → Tailwind 映射
+
+从 MasterGo DSL 提取的 CSS 属性转换为 Tailwind class 的规则。
+
+能匹配 Tailwind 预设值的用预设 class，不能匹配的用方括号语法（如 `w-[380px]`）。
+
+**布局**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `display: flex` | `flex` |
+| `flex-direction: column` | `flex-col` |
+| `flex-direction: row` | `flex-row` |
+| `flex-wrap: wrap` | `flex-wrap` |
+| `flex-wrap: nowrap` | `flex-nowrap` |
+| `gap: {n}px` | `gap-{n/4}`（Tailwind 间距单位 = 4px：4→`gap-1`, 8→`gap-2`, 12→`gap-3`, 16→`gap-4`, 20→`gap-5`, 24→`gap-6`, 32→`gap-8`） |
+| `justify-content: center` | `justify-center` |
+| `justify-content: space-between` | `justify-between` |
+| `justify-content: flex-end` | `justify-end` |
+| `align-items: center` | `items-center` |
+| `align-items: flex-start` | `items-start` |
+| `align-items: flex-end` | `items-end` |
+
+**尺寸**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `width: {n}px` | `w-[{n}px]`（匹配预设则用 `w-full`, `w-1/2` 等） |
+| `height: {n}px` | `h-[{n}px]`（匹配预设则用 `h-full`, `h-screen` 等） |
+| `min-width: {n}px` | `min-w-[{n}px]` |
+| `max-width: {n}px` | `max-w-[{n}px]` |
+| `min-height: {n}px` | `min-h-[{n}px]` |
+
+**间距**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `padding: {n}px` | `p-[{n}px]`（匹配预设则用 `p-4`, `px-6` 等） |
+| `margin: {n}px` | `m-[{n}px]`（匹配预设则用 `m-4`, `mx-auto` 等） |
+
+**排版**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `font-size: 12px` | `text-xs` |
+| `font-size: 14px` | `text-sm` |
+| `font-size: 16px` | `text-base` |
+| `font-size: 18px` | `text-lg` |
+| `font-size: 20px` | `text-xl` |
+| `font-size: 24px` | `text-2xl` |
+| `font-size: {n}px`（非预设） | `text-[{n}px]` |
+| `line-height: 1.5` | `leading-normal` |
+| `line-height: 1.75` | `leading-relaxed` |
+| `font-weight: 400` | `font-normal` |
+| `font-weight: 500` | `font-medium` |
+| `font-weight: 600` | `font-semibold` |
+| `font-weight: 700` | `font-bold` |
+| `text-align: center` | `text-center` |
+| `text-align: right` | `text-right` |
+
+**文本控制**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `overflow-wrap: break-word` | `break-words` |
+| `word-break: break-all` | `break-all` |
+| `white-space: nowrap` | `whitespace-nowrap` |
+| `white-space: pre` | `whitespace-pre` |
+| `text-overflow: ellipsis` | `truncate`（需配合 `overflow-hidden whitespace-nowrap`） |
+
+**溢出**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `overflow: hidden` | `overflow-hidden` |
+| `overflow: auto` | `overflow-auto` |
+| `overflow: scroll` | `overflow-scroll` |
+
+**视觉**
+
+| CSS 属性 | Tailwind class |
+|---------|---------------|
+| `border-radius: 4px` | `rounded` |
+| `border-radius: 8px` | `rounded-lg` |
+| `border-radius: 12px` | `rounded-xl` |
+| `border-radius: 16px` | `rounded-2xl` |
+| `border-radius: 9999px` | `rounded-full` |
+| `border-radius: {n}px`（非预设） | `rounded-[{n}px]` |
+| `cursor: pointer` | `cursor-pointer` |
+| `opacity: 0.5` | `opacity-50` |
+
 ### Scoped SCSS 允许场景
 
 - Element Plus 组件样式覆盖（**必须**使用 `:deep()`）

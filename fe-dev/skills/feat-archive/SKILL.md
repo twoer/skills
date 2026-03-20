@@ -1,6 +1,7 @@
 ---
 name: feat-archive
 description: 归档已完成的功能。触发词: "feat archive", "功能归档", "归档"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Archive - 归档功能

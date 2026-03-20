@@ -1,6 +1,7 @@
 ---
 name: ui-update
 description: 设计稿差异更新。触发词: "ui update", "设计稿更新", "ui-update"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # UI Update - 设计稿差异更新

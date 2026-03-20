@@ -1,6 +1,7 @@
 ---
 name: feat-req
 description: 管理功能关联的需求链接，支持添加、查看、同步需求文档。触发词: "feat req", "需求管理", "需求文档", "同步需求"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Req - 需求文档管理

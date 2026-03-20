@@ -1,6 +1,7 @@
 ---
 name: feat-new
 description: 创建新功能开发工作流（目录 + Git 分支 + 文档模板）。触发词: "feat new", "新建功能", "创建功能", "开始新功能"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat New - 创建功能开发工作流

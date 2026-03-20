@@ -1,6 +1,7 @@
 ---
 name: feat-list
 description: 列出所有功能开发任务。触发词: "feat list", "功能列表", "查看功能"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat List - 列出所有功能

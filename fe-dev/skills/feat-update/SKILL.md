@@ -1,6 +1,7 @@
 ---
 name: feat-update
 description: 需求变更管理，追加变更内容到 extra.md 并生成变更计划。触发词: "feat update", "需求变更", "变更管理"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Update - 需求变更管理
