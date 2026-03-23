@@ -145,6 +145,32 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 | 导航 | ElMenu, ElMenuItem, ElBreadcrumb, ElTabs, ElTabPane, ElDropdown |
 | 通用 | ElButton, ElCard, ElTag, ElBadge, ElTooltip, ElAvatar, ElDivider, ElEmpty, ElSkeleton |
 
+### EP 组件文本换行覆盖清单
+
+部分 Element Plus 组件内部默认设置 `white-space: nowrap`，会阻止文本自然换行。当 DSL 或 spec 表明这些组件内的文本需要换行时，必须通过 `:deep()` 覆盖。
+
+| 组件 | 需覆盖的内部选择器 | 典型场景 |
+|------|-----------------|---------|
+| ElCheckbox | `.el-checkbox__label` | 协议勾选文案（如"我已阅读并同意《隐私政策》..."） |
+| ElRadio | `.el-radio__label` | 长选项文案 |
+| ElButton | `.el-button` | 按钮内长文本（少见但可能） |
+| ElTag | `.el-tag` | 标签内长内容 |
+| ElBreadcrumbItem | `.el-breadcrumb__inner` | 长面包屑文本 |
+| ElStep | `.el-step__title` | 步骤条长标题 |
+
+**覆盖写法（Scoped SCSS）：**
+
+```scss
+// 以 ElCheckbox 为例
+.agreement-checkbox {
+  :deep(.el-checkbox__label) {
+    white-space: normal;
+  }
+}
+```
+
+> **使用条件**：仅在文本内容较长、设计稿中明确换行时才覆盖。短文本场景（如单个按钮词）应保持 EP 默认的 nowrap 行为。
+
 ### Tailwind 常用 class
 
 | 用途 | class |
