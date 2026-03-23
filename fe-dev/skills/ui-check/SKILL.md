@@ -63,6 +63,8 @@ git branch --show-current
 - 缺少 `cursor-pointer` → 为可点击元素添加 `cursor-pointer` class
 - 缺少 `transition` → 为 hover 状态添加 `transition: color 200ms`
 - 缺少 `alt` 属性 → 为 `<img>` 添加 `alt=""`
+- flex 容器内文本子项缺少 `min-w-0` → 添加 `min-w-0` class（防止文本溢出容器）
+- 宽度约束容器内文本缺少 `break-words` → 添加 `break-words` class（确保文本可换行）
 
 **执行流程：**
 1. 逐项修复 warning，输出修复详情
