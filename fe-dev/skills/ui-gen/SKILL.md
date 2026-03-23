@@ -95,12 +95,18 @@ git branch --show-current
 | 间距 | `padding`, `margin` |
 | 排版 | `font-size`, `line-height`, `font-weight`, `color`, `text-align` |
 | 文本控制 | `white-space`, `overflow-wrap`, `word-break`, `text-overflow` |
+| DSL 文本模式 | `textMode`（DSL TEXT 节点字段，映射规则见 ui-utils.md） |
 | 溢出 | `overflow`, `overflow-x`, `overflow-y` |
 | 视觉 | `border-radius`, `cursor`, `opacity` |
 
-4. 将 CSS 属性值转换为 Tailwind class（详见 `<skill-path>/references/ui-utils.md` 中的"CSS → Tailwind 映射"表）
-5. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
-6. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
+4. 将 CSS 属性值转换为 Tailwind class（详见 `<skill-path>/references/ui-utils.md` 中的"CSS → Tailwind 映射"表），包括 `textMode` → CSS 映射
+5. **文本换行推断**：遍历 DSL 节点树时，对满足以下条件的 TEXT 节点自动补充 `break-words` class：
+   - 父容器有 `flexContainerInfo`（Auto Layout）且有宽度约束（`width`/`max-width`）
+   - TEXT 节点的 `textMode` 不是 `"single-line"`（或 `textMode` 字段缺失）
+   - 这是一个通用规则，适用于所有组件（ElCheckbox、ElRadio、ElButton 等），不仅限于特定组件类型
+6. 对满足推断条件的 flex 子项，额外补充 `min-w-0` class（防止 flex 子项内容溢出容器）
+7. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
+8. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
 
 ### 步骤 7: 生成代码
 
@@ -159,6 +165,12 @@ import { useXxxService } from '~/composables/useXxxService'
 #### 组件映射参考
 
 详见 `<skill-path>/references/ui-utils.md` 中的"Element Plus 组件映射"表。
+
+#### EP 组件文本换行覆盖
+
+生成代码时，对照 `<skill-path>/references/ui-utils.md` 中的"EP 组件文本换行覆盖清单"：
+- 当 EP 组件内包含较长文本且设计稿中该文本换行时，在 `<style scoped>` 中添加 `:deep()` 覆盖
+- 短文本场景（如按钮单个词）保持 EP 默认 nowrap，不覆盖
 
 #### Tailwind 常用 class 参考
 

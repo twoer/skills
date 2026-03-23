@@ -145,6 +145,32 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 | 导航 | ElMenu, ElMenuItem, ElBreadcrumb, ElTabs, ElTabPane, ElDropdown |
 | 通用 | ElButton, ElCard, ElTag, ElBadge, ElTooltip, ElAvatar, ElDivider, ElEmpty, ElSkeleton |
 
+### EP 组件文本换行覆盖清单
+
+部分 Element Plus 组件内部默认设置 `white-space: nowrap`，会阻止文本自然换行。当 DSL 或 spec 表明这些组件内的文本需要换行时，必须通过 `:deep()` 覆盖。
+
+| 组件 | 需覆盖的内部选择器 | 典型场景 |
+|------|-----------------|---------|
+| ElCheckbox | `.el-checkbox__label` | 协议勾选文案（如"我已阅读并同意《隐私政策》..."） |
+| ElRadio | `.el-radio__label` | 长选项文案 |
+| ElButton | `.el-button` | 按钮内长文本（少见但可能） |
+| ElTag | `.el-tag` | 标签内长内容 |
+| ElBreadcrumbItem | `.el-breadcrumb__inner` | 长面包屑文本 |
+| ElStep | `.el-step__title` | 步骤条长标题 |
+
+**覆盖写法（Scoped SCSS）：**
+
+```scss
+// 以 ElCheckbox 为例
+.agreement-checkbox {
+  :deep(.el-checkbox__label) {
+    white-space: normal;
+  }
+}
+```
+
+> **使用条件**：仅在文本内容较长、设计稿中明确换行时才覆盖。短文本场景（如单个按钮词）应保持 EP 默认的 nowrap 行为。
+
 ### Tailwind 常用 class
 
 | 用途 | class |
@@ -228,6 +254,17 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 | `white-space: pre` | `whitespace-pre` |
 | `text-overflow: ellipsis` | `truncate`（需配合 `overflow-hidden whitespace-nowrap`） |
 
+**textMode（DSL 文本模式 → CSS 映射）**
+
+MasterGo DSL 的 TEXT 节点通过 `textMode` 字段声明文本行为：
+
+| DSL textMode | CSS 属性 | Tailwind class |
+|-------------|---------|---------------|
+| `"single-line"` | `white-space: nowrap` | `whitespace-nowrap` |
+| `"multi-line"` 或缺失 | `white-space: normal; overflow-wrap: break-word` | `break-words` |
+
+> **推断规则**：当容器有 `flexContainerInfo` + 宽度约束（`width`/`max-width`），且子 TEXT 节点的 `textMode` 不是 `"single-line"` 时，即使 DSL 未显式记录，也应为文本节点推断 `overflow-wrap: break-word`（`break-words`）。这是 Auto Layout → CSS Flex 的通用映射，不限于特定组件。
+
 **溢出**
 
 | CSS 属性 | Tailwind class |
@@ -276,6 +313,12 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 - 文字对比度 >= 4.5:1
 - `<img>` 必须有 `alt` 属性
 - `focus` 状态可见
+
+### 布局还原规则（warning 级别）
+
+- flex 容器内含文本的子项，应有 `min-w-0`（防 flex 子项溢出）
+- 宽度约束容器内的文本元素，应有 `break-words`（确保文本换行）
+- 仅当 `textMode: "single-line"` 或显式 `whitespace-nowrap` 时允许文本不换行
 
 ### 项目规则（info 级别）
 
