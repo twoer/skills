@@ -301,6 +301,7 @@ MasterGo DSL 的 TEXT 节点通过 `textMode` 字段声明文本行为：
 - 无内联 `style="..."` 属性
 - `<style>` 标签必须有 `scoped` 属性
 - 表单字段必须有 `label` 或 `aria-label`
+- 禁止硬编码负像素边距（如 `mt-[-540px]`、`ml-[-100px]`）— 覆盖层应使用 `absolute`/`relative` 定位，负边距 hack 说明布局结构理解有误
 
 ### 交互规则（warning 级别）
 
