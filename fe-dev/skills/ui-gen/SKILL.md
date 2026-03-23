@@ -126,6 +126,16 @@ git branch --show-current
 - 从 spec"组件清单"的 `EP 属性` 列读取属性，写入对应组件标签
 - 未记录的属性使用 Element Plus 默认值，不额外添加
 
+**INSTANCE 节点映射**：
+- DSL 中的 INSTANCE 节点表示 MasterGo 组件实例，优先映射到对应的 EP 组件
+- 如果 INSTANCE 的主组件在 spec 的语义分析中已识别，直接使用该映射
+
+**组件拆分策略**：
+- 单个 .vue 文件的 `<template>` 部分超过 50 行时，考虑提取子组件
+- 拆分依据为 spec 语义分析中的组件树（PascalCase 命名的逻辑单元）
+- 子组件文件放置在同目录的 `components/` 子目录下
+- 简单页面（表单、登录等）不需要拆分
+
 #### 代码结构
 
 ```vue
@@ -161,6 +171,7 @@ import { useXxxService } from '~/composables/useXxxService'
 2. **Tailwind CSS class** — 布局、间距、尺寸、响应式、文字
 3. **Scoped SCSS** — 仅 `:deep()` 覆盖和装饰性样式
 4. **禁止** — `style="..."` 内联样式、全局 SCSS、`!important`
+5. **禁止硬编码负像素边距** — 如 `mt-[-540px]`、`ml-[-100px]` 等。负边距 hack 说明布局结构理解有误（如将覆盖层当成了 flex 兄弟节点）。覆盖层必须使用 `absolute` / `relative` + `top` / `bottom` / `left` / `right` 定位
 
 #### 组件映射参考
 
