@@ -166,6 +166,12 @@ import { useXxxService } from '~/composables/useXxxService'
 
 详见 `<skill-path>/references/ui-utils.md` 中的"Element Plus 组件映射"表。
 
+#### EP 组件文本换行覆盖
+
+生成代码时，对照 `<skill-path>/references/ui-utils.md` 中的"EP 组件文本换行覆盖清单"：
+- 当 EP 组件内包含较长文本且设计稿中该文本换行时，在 `<style scoped>` 中添加 `:deep()` 覆盖
+- 短文本场景（如按钮单个词）保持 EP 默认 nowrap，不覆盖
+
 #### Tailwind 常用 class 参考
 
 详见 `<skill-path>/references/ui-utils.md` 中的"Tailwind 常用 class"表。
