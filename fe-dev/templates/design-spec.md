@@ -13,11 +13,11 @@
 |------|-----|------|
 | <!-- 例：--el-color-primary | #02B3D6 | 品牌主色 --> |
 
-### Tailwind 扩展
+### Tailwind 扩展（非颜色）
 
 | 变量 | 值 | 说明 |
 |------|-----|------|
-| <!-- 例：colors.brand | #02B3D6 | 品牌色 --> |
+| <!-- 仅定义非颜色类 token，如 fontFamily、spacing。颜色统一走 Element Plus 主题层 --> |
 
 ### Scoped SCSS
 

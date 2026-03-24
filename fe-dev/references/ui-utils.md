@@ -78,7 +78,6 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
   "updatedAt": "{ISO date}",
   "tokens": {
     "element-plus": {},
-    "tailwind": {},
     "scoped": {}
   }
 }

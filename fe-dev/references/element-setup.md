@@ -156,10 +156,10 @@ export default defineEventHandler(async (event) => {
 
 ### Styling
 
-三层样式方案：
+样式方案（颜色以 Element Plus 为单一数据源）：
 
-1. **Tailwind CSS** — 工具类
-2. **Element Plus SCSS** — 组件主题定制
+1. **Element Plus SCSS** — 组件主题定制，**颜色的唯一定义处**
+2. **Tailwind CSS** — 工具类，颜色通过 `var(--el-*)` 引用 EP 变量
 3. **Custom SCSS** — 全局样式和组件样式
 
 ## Development Workflow

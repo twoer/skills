@@ -225,11 +225,24 @@ import { useXxxService } from '~/composables/useXxxService'
 - 已存在且值不同 → 提示用户确认是否覆盖
 - 不存在 → 提示用户是否新增
 
-**9b. Tailwind 扩展 tokens**
+**9b. Tailwind 扩展 tokens（颜色引用 EP 变量）**
 
-检查 `tailwind.config.ts` 中是否已有对应配置：
-- 已存在且值不同 → 提示用户确认
-- 不存在 → 提示用户是否新增
+检查 `tailwind.config.ts` 中的颜色类配置：
+
+- 如果 `tailwind.config.ts` 中的颜色是**硬编码 hex 值**（如 `primary: '#6B21A8'`），且与 Element Plus 主题 token 对应（如 `--el-color-primary`），建议改为引用 CSS 变量：
+  ```ts
+  // ❌ 硬编码，与 EP 主色不同步
+  primary: { DEFAULT: '#6B21A8' }
+
+  // ✅ 引用 EP 变量，保持单一数据源
+  primary: {
+    DEFAULT: 'var(--el-color-primary)',
+    light: 'var(--el-color-primary-light-3)',
+    lighter: 'var(--el-color-primary-light-5)',
+    dark: 'var(--el-color-primary-dark-2)',
+  }
+  ```
+- 非颜色的 Tailwind 扩展 token（字体、间距等）正常检查，已存在且值不同 → 提示用户确认；不存在 → 提示新增
 
 **9c. Scoped SCSS tokens**
 
@@ -244,7 +257,7 @@ import { useXxxService } from '~/composables/useXxxService'
 ```
 ✅ 页面代码已生成
 📄 文件: {target}
-🎨 新增 tokens: EP({n}) + Tailwind({n}) + SCSS({n})
+🎨 新增 tokens: EP({n}) + SCSS({n})
 📦 使用 types: {列表}
 📦 使用 services: {列表}
 🖼️ 图片: {n} 个成功, {n} 个失败（需手动替换到 {pageDir}/assets/images/）
