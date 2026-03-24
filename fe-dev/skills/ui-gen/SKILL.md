@@ -90,6 +90,7 @@ git branch --show-current
 
 | 类别 | 需提取的属性 |
 |------|------------|
+| 定位 | `position`, `top`, `left`, `right`, `bottom`, `z-index` |
 | 布局 | `display`, `flex-direction`, `flex-wrap`, `gap`, `justify-content`, `align-items` |
 | 尺寸 | `width`, `height`, `min-width`, `max-width`, `min-height`, `max-height` |
 | 间距 | `padding`, `margin` |
@@ -100,13 +101,14 @@ git branch --show-current
 | 视觉 | `border-radius`, `cursor`, `opacity` |
 
 4. 将 CSS 属性值转换为 Tailwind class（详见 `<skill-path>/references/ui-utils.md` 中的"CSS → Tailwind 映射"表），包括 `textMode` → CSS 映射
-5. **文本换行推断**：遍历 DSL 节点树时，对满足以下条件的 TEXT 节点自动补充 `break-words` class：
+5. **绝对定位推断**：对语义组件树中标注为 `(覆盖层)` 的节点，从 DSL 的 `bounds` 或 `layoutStyle` 中提取 `x`、`y` 坐标，映射为 `top-[{y}px] left-[{x}px]`；如果节点有 `zIndex` 也一并提取
+6. **文本换行推断**：遍历 DSL 节点树时，对满足以下条件的 TEXT 节点自动补充 `break-words` class：
    - 父容器有 `flexContainerInfo`（Auto Layout）且有宽度约束（`width`/`max-width`）
    - TEXT 节点的 `textMode` 不是 `"single-line"`（或 `textMode` 字段缺失）
    - 这是一个通用规则，适用于所有组件（ElCheckbox、ElRadio、ElButton 等），不仅限于特定组件类型
-6. 对满足推断条件的 flex 子项，额外补充 `min-w-0` class（防止 flex 子项内容溢出容器）
-7. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
-8. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
+7. 对满足推断条件的 flex 子项，额外补充 `min-w-0` class（防止 flex 子项内容溢出容器）
+8. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
+9. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
 
 ### 步骤 7: 生成代码
 
