@@ -67,6 +67,15 @@ git branch --show-current
 - flex 容器内文本子项缺少 `min-w-0` → 添加 `min-w-0` class（防止文本溢出容器）
 - 宽度约束容器内文本缺少 `break-words` → 添加 `break-words` class（确保文本可换行）
 
+**不可自动修复、需记入 TODO list 的 warning 类型：**
+- EP 图标替代设计稿自定义图标 — 需用户手动替换为对应 SVG 组件或图片资源
+
+**可自动修复的 EP 默认属性 warning：**
+- ElInput 缺少 `clearable` → 添加 `clearable`
+- ElSelect 缺少 `clearable` → 添加 `clearable`
+- ElSelect 缺少 `filterable` → 添加 `filterable`
+- ElDatePicker 缺少 `clearable` → 添加 `clearable`
+
 **执行流程：**
 1. 逐项修复 warning，输出修复详情
 2. 修复完成后重新执行步骤 3-4 检查

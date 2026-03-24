@@ -1,6 +1,7 @@
 ---
 name: spec
 description: Spec 规范工具集。触发词: "spec", "API 同步", "生成接口", "OpenAPI", "规范同步"
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Spec Kit - 规范工具集
@@ -35,11 +36,20 @@ git branch --show-current
 
 ### 步骤 2: 定位 openapi.yaml
 
-按优先级搜索：
-1. `specs/{branchKey}/contracts/openapi.yaml`
-2. `specs/{branchKey}/artifacts/contracts/openapi.yaml`
-3. Glob 搜索 `specs/{branchKey}/**/openapi.yaml`
-4. Glob 搜索 `specs/**/openapi.yaml`，让用户选择
+先获取 git 根目录，作为所有路径搜索的基准：
+
+```bash
+git rev-parse --show-toplevel
+```
+
+以 `{GIT_ROOT}` 作为根目录，按优先级搜索：
+
+1. `{GIT_ROOT}/specs/{branchKey}/contracts/openapi.yaml`
+2. `{GIT_ROOT}/specs/{branchKey}/artifacts/contracts/openapi.yaml`
+3. Glob 搜索 `{GIT_ROOT}/specs/{branchKey}/**/openapi.yaml`
+4. Glob 搜索 `{GIT_ROOT}/specs/**/openapi.yaml`，让用户选择
+
+> **说明**：用户通常在前端子目录下运行命令，而 `specs/` 目录可能位于 monorepo 根目录，因此必须从 git 根目录搜索，而非当前工作目录。
 
 ### 步骤 3: 解析 OpenAPI
 

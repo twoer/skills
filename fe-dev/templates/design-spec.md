@@ -29,13 +29,34 @@
 
 <!-- 描述页面整体布局，如：左右分栏（flex: 1 + 1）、顶部导航 + 内容区、弹窗等 -->
 
+<!-- 语义化组件树（由 ui-add 步骤 5a 填充）示例：
+└── PageRoot (页面)
+    ├── HeaderNav (头部导航)
+    └── HeroSection (主内容区)
+        ├── HeroTitle (标题) [欢迎使用]
+        └── CTAButton (按钮) [立即体验]
+
+覆盖层节点示例（含定位坐标）：
+    ├── IllustrationBg (图片) [背景插图]
+    └── HeroText (覆盖层) [x=40, y=100]  ← 相对父容器左上角的 bounds 坐标
+-->
+
+## 资源清单
+
+| 语义名 | 类型 | DSL 节点 ID | 用途 | 处理方式 |
+|--------|------|------------|------|---------|
+| <!-- 例：LogoIcon | LAYER (PNG) | 2:00986 | 侧边栏 Logo | 下载到 assets/images/ -->
+| <!-- 例：MenuIcon | PATH (SVG) | 2:00996 | 菜单图标"数据统计" | 导出为 SVG 组件 -->
+| <!-- 例：SearchIcon | INSTANCE | 2:1259 | 工具栏搜索 | 使用 EP 图标或导出 SVG -->
+
 ## 组件清单
 
-| 区域 | Element Plus 组件 | EP 属性 | height-override | Tailwind 样式 | 说明 |
-|------|-------------------|---------|----------------|--------------|------|
-| <!-- 例：搜索栏 | ElInput, ElButton | size="default" | — | flex, gap-4 | 关键词 + 状态筛选 -->
-| <!-- 例：登录表单 | ElForm | label-position="top" | — | w-full | 邮箱+密码 -->
-| <!-- 例：登录输入框 | ElInput | size="default" | 36px | — | 设计稿高度 36px，EP default=32px --> |
+| 区域 | Element Plus 组件 | EP 属性 | height-override | 文本换行 | Tailwind 样式 | 说明 |
+|------|-------------------|---------|----------------|---------|--------------|------|
+| <!-- 例：搜索栏 | ElInput, ElButton | size="default" | — | — | flex, gap-4 | 关键词 + 状态筛选 -->
+| <!-- 例：登录表单 | ElForm | label-position="top" | — | — | w-full | 邮箱+密码 -->
+| <!-- 例：登录输入框 | ElInput | size="default" | 36px | — | — | 设计稿高度 36px，EP default=32px -->
+| <!-- 例：协议勾选 | ElCheckbox | — | — | .el-checkbox__label { white-space: normal } | — | 协议文案需换行 --> |
 
 ## 字段映射
 

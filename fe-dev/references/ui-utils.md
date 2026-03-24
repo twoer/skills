@@ -130,9 +130,16 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 ### 样式优先级（从高到低）
 
 1. **Element Plus 组件** — 优先使用 EP 内置组件
-2. **Tailwind CSS class** — 布局、间距、响应式、文字
-3. **Scoped SCSS** — 仅用于 `:deep()` 覆盖和装饰性样式
-4. **禁止** — 内联 style、全局 SCSS、!important
+2. **Tailwind CSS class** — 布局、间距、尺寸、响应式、文字，**必须写在 `<template>` 元素的 class 属性上**
+3. **Scoped SCSS** — 仅用于 `:deep()` 覆盖和装饰性样式。如需在 `<style>` 中使用 Tailwind，必须用 `@apply`
+4. **禁止** — 内联 style、全局 SCSS、!important、`<style>` 块中裸写 Tailwind class
+
+### 图标/SVG 引用规则
+
+1. **优先使用设计稿资源** — 如果步骤 5 成功提取了图片/SVG 资源，必须使用该资源
+2. **nuxt-svgo 项目** — SVG 图标使用自动导入组件方式（如 `<ICommonLogo />`），目录为 `app/assets/icons/svgs/{分类}/`
+3. **非 nuxt-svgo 项目** — SVG 降级为图片引用（`./assets/images/xxx.svg`）
+4. **禁止用 EP 图标替代设计稿自定义图标/Logo** — 仅当资源提取失败时才允许临时替代，且必须记入 TODO list
 
 ### Element Plus 组件映射
 
@@ -143,6 +150,19 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 | 反馈 | ElDialog, ElMessageBox, ElMessage, ElNotification, ElDrawer |
 | 导航 | ElMenu, ElMenuItem, ElBreadcrumb, ElTabs, ElTabPane, ElDropdown |
 | 通用 | ElButton, ElCard, ElTag, ElBadge, ElTooltip, ElAvatar, ElDivider, ElEmpty, ElSkeleton |
+
+### EP 组件默认属性规则
+
+以下属性作为**默认行为**，生成代码时自动添加，无需设计稿明确标注：
+
+| 组件 | 默认属性 | 说明 |
+|------|---------|------|
+| ElInput | `clearable` | 支持用户一键清空输入内容 |
+| ElSelect | `clearable` | 支持用户一键清空选择 |
+| ElSelect | `filterable` | 支持用户搜索选项 |
+| ElDatePicker | `clearable` | 支持用户一键清空日期 |
+
+> **注意**：仅在属性提取规则表中明确标注了这些属性时才添加。设计稿中能明确判断为"不可清空"或"不可搜索"的场景除外。
 
 ### EP 组件文本换行覆盖清单
 
@@ -301,6 +321,7 @@ MasterGo DSL 的 TEXT 节点通过 `textMode` 字段声明文本行为：
 - `<style>` 标签必须有 `scoped` 属性
 - 表单字段必须有 `label` 或 `aria-label`
 - 禁止硬编码负像素边距（如 `mt-[-540px]`、`ml-[-100px]`）— 覆盖层应使用 `absolute`/`relative` 定位，负边距 hack 说明布局结构理解有误
+- Tailwind class **必须写在 `<template>` 元素的 class 属性上**，禁止直接裸写在 `<style>` 块中（如 `min-w-0;`）。如需在 `<style>` 中使用 Tailwind，必须用 `@apply`（如 `@apply min-w-0;`）
 
 ### 交互规则（warning 级别）
 
@@ -326,3 +347,28 @@ MasterGo DSL 的 TEXT 节点通过 `textMode` 字段声明文本行为：
 - 优先使用 Element Plus 组件而非手动实现
 - Tailwind class 优先于 SCSS
 - scoped SCSS 中无全局样式泄漏（无未加前缀的选择器）
+
+### 资源引用规则（warning 级别）
+
+- 禁止用 EP 图标组件（如 `<DataAnalysis />`、`<Search />`）替代设计稿中的自定义图标/Logo，除非设计稿中没有对应的矢量资源
+- 如果 spec 资源清单中有对应条目但代码中使用了 EP 图标替代 → warning，提示应使用已提取的资源
+- 如果代码中使用了 EP 图标替代且 spec 资源清单中没有对应条目 → info，说明可能是合理替代
+
+**EP 图标替代检测方式**（ui-check 步骤 3 执行）：
+
+1. **扫描 EP 图标引用**：在 .vue 文件中扫描 EP 图标组件的使用模式：
+   - `<el-icon>` 标签内的子组件（如 `<DataAnalysis />`、`<Search />`）
+   - 带 `el-icon` class 或通过 `ElIcon` 包裹的节点
+   - 通过 `import { DataAnalysis } from '@element-plus/icons-vue'` 导入的图标
+2. **匹配 spec 资源清单**：对每个 EP 图标引用，与 spec"资源清单"表格中的条目做**语义名模糊匹配**：
+   - EP 图标组件名（PascalCase）→ 转为 kebab-case → 与资源清单"语义名"字段做模糊对比（包含关键词即匹配）
+   - 示例：`<DataAnalysis />` → `data-analysis` → 匹配资源清单中名为 `DataAnalysisIcon`、`StatsDataAnalysis` 的条目
+3. **判断结果**：
+   - 匹配到资源清单条目 → **warning**：`{行号} 使用了 EP 图标 <{ComponentName}> 替代，资源清单中有对应条目 "{语义名}"，应使用已提取的资源`
+   - 未匹配到资源清单条目 → **info**：`{行号} 使用了 EP 图标 <{ComponentName}>，spec 资源清单中无对应条目，可能是合理替代`
+
+### EP 组件默认属性检查（warning 级别）
+
+- ElInput 缺少 `clearable` → 提示添加
+- ElSelect 缺少 `clearable` 或 `filterable` → 提示添加
+- ElDatePicker 缺少 `clearable` → 提示添加
