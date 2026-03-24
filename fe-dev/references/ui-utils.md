@@ -100,11 +100,15 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 
 2. 尝试 getDsl（结构化节点树）
    - 工具：mcp__mastergo__mcp__getDsl
-   - 参数：shortLink（直接传入 URL）
+   - 参数：shortLink（直接传入 URL），或 fileId + layerId（文件链格式）
    - 成功 → AI 分析 DSL 节点树
+   - **数据过大**（MCP 将结果保存到临时文件）→ Read 读取临时文件，分批处理
+   - **仍过大** → 用 fileId + layerId 重新调用，缩小返回范围
    - 失败且 URL 含特殊字符 → URL 编码后重试一次
 
 3. 两者均失败 → 报错退出，提示用户检查 URL 或网络
+
+> **推荐**：对于大型设计文件，优先使用文件链接（`/file/{fileId}?layer_id={layerId}`）而非短链，只返回目标页面的节点树，避免数据过大。
 ```
 
 ### URL 编码重试

@@ -34,7 +34,7 @@ fe-dev/
 │   ├── feat-gen/SKILL.md         # /fe-dev:feat-gen — 生成开发/测试计划
 │   ├── feat-exec/SKILL.md        # /fe-dev:feat-exec — 执行开发任务
 │   ├── feat-update/SKILL.md      # /fe-dev:feat-update — 需求变更管理
-│   ├── spec/SKILL.md             # /fe-dev:spec — OpenAPI 同步 + 需求分析(req-gen)
+│   ├── spec/SKILL.md             # /fe-dev:spec — OpenAPI 同步 + 需求分析(req-gen) + 需求执行(req-exec)
 │   ├── ui/SKILL.md               # /fe-dev:ui — 设计稿列表
 │   ├── ui-add/SKILL.md           # /fe-dev:ui-add — 设计稿分析
 │   ├── ui-gen/SKILL.md           # /fe-dev:ui-gen — 代码生成

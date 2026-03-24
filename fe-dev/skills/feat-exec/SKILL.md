@@ -1,7 +1,7 @@
 ---
 name: feat-exec
 description: 按照 plan.md 自动执行开发任务，支持断点续传。触发词: "feat exec", "执行任务", "开始开发"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat Exec - 执行开发任务

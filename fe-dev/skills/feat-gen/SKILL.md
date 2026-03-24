@@ -1,7 +1,7 @@
 ---
 name: feat-gen
 description: 基于需求文档生成开发计划和测试计划。触发词: "feat gen", "生成计划", "生成开发计划", "生成测试计划"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write, Skill
 ---
 
 # Feat Gen - 生成开发计划和测试计划
