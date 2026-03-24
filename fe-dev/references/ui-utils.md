@@ -85,41 +85,99 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 
 ---
 
-## MCP 调用约定
+## MasterGo API 调用约定
+
+### 前置条件
+
+在调用 API 之前，必须先运行 `/fe-dev:ui-setup` 配置 PAT。
+
+配置文件路径：`<skill-path>/config/mastergo.json`
+
+```json
+{
+  "pat": "mg_...",
+  "base_url": "https://mastergo.iflytek.com"
+}
+```
+
+### getMastergoConfig
+
+读取配置文件。如果文件不存在或 `pat` 为空，提示用户先运行 `/fe-dev:ui-setup`。
 
 ### 设计稿获取策略
 
-**仅 MasterGo，两步降级，无图片分析兜底。**
+**仅使用 DSL 端点，curl 直接保存为中间文件，后续流程读取本地文件，不重复请求。**
 
 ```
-1. 尝试 getD2c（最佳，直接生成代码）
-   - 工具：mcp__mastergo__mcp__getD2c
-   - 参数：contentId, documentId（从 URL 提取）
-   - 成功 → 使用返回的 code 字段
-   - 失败且参数含特殊字符（如 `:`）→ URL 编码后重试一次
-
-2. 尝试 getDsl（结构化节点树）
-   - 工具：mcp__mastergo__mcp__getDsl
-   - 参数：shortLink（直接传入 URL），或 fileId + layerId（文件链格式）
-   - 成功 → AI 分析 DSL 节点树
-   - **数据过大**（MCP 将结果保存到临时文件）→ Read 读取临时文件，分批处理
-   - **仍过大** → 用 fileId + layerId 重新调用，缩小返回范围
-   - 失败且 URL 含特殊字符 → URL 编码后重试一次
-
-3. 两者均失败 → 报错退出，提示用户检查 URL 或网络
-
-> **推荐**：对于大型设计文件，优先使用文件链接（`/file/{fileId}?layer_id={layerId}`）而非短链，只返回目标页面的节点树，避免数据过大。
+1. 解析 URL（提取 fileId + layerId）
+2. curl 调用 DSL API，直接保存到 {UI_DIR}/specs/{pageId}-dsl-raw.json
+3. 读取 dsl_raw.json 进行分析
+4. ui-gen 等后续流程直接读取已有 dsl_raw.json，不再调用 API
 ```
 
-### URL 编码重试
+### fetchDsl
 
-当 MCP 调用返回空或报错时，检查参数中是否包含 `:` 等特殊字符（常见于 MasterGo 的 `layer_id`），如果有，将特殊字符替换为 URL 编码（如 `:` → `%3A`）后重试一次。
+调用 MasterGo DSL API，**直接写入文件**（避免大响应撑爆 Bash 输出）：
+
+```bash
+curl -s -o {output_path} \
+  -H "X-MG-UserAccessToken: {pat}" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  "{base_url}/mcp/dsl?fileId={fileId}&layerId={layerId}"
+```
+
+**参数说明**：
+- `pat`: 从 `config/mastergo.json` 读取
+- `base_url`: 从 `config/mastergo.json` 读取
+- `fileId`: 从文件链接 URL 中提取
+- `layerId`: 从文件链接 URL 中提取（需 URL decode，如果含 `/` 只取首段）
+
+**错误处理**：
+
+| HTTP 状态码 | 含义 | 处理方式 |
+|-------------|------|---------|
+| 200 | 成功 | 读取 dsl_raw.json 继续 |
+| 401 / 403 | PAT 无效或过期 | 提示用户重新运行 `/fe-dev:ui-setup` |
+| 404 | fileId/layerId 不存在 | 提示用户检查 URL |
+| 500 | 服务端错误 | 提示稍后重试 |
 
 ### URL 解析
 
-- 短链格式：`https://mastergo.iflytek.com/goto/RuscHDVn`
-- 文件格式：`https://mastergo.iflytek.com/file/{fileId}?layer_id={layerId}`
-- contentId 从短链路径或 D2C URL 中提取
+**文件链接**（推荐）：
+```
+https://mastergo.iflytek.com/file/{fileId}?layer_id={layerId}
+```
+- fileId: 正则 `/file/([^/?]+)` 提取
+- layerId: 从 `layer_id` 参数获取，需 URL decode；如果 decode 后含 `/`（复合路径），只取 `/` 前的部分
+
+**短链**（支持但会获取整个设计文件，数据量大）：
+```
+https://mastergo.iflytek.com/goto/XXXXX
+```
+- 短链处理策略：
+  1. 通过 HTTP redirect 解析：
+     ```bash
+     curl -sIL "https://mastergo.iflytek.com/goto/XXXXX" 2>/dev/null | grep -i "^location:" | tail -1
+     ```
+     从 Location header 提取 fileId + layerId
+  2. 如果 redirect 解析失败（如 JS 跳转），报错提示用户使用文件链接
+
+> **推荐**：优先使用文件链接（含 `layer_id`），只返回目标页面的节点树，避免数据过大。
+
+### saveDslRaw
+
+将 DSL 响应保存到中间文件：
+
+```
+路径: {UI_DIR}/specs/{pageId}-dsl-raw.json
+```
+
+由 ui-add 创建，ui-gen/ui-update 直接读取，不重复请求。
+
+### readDslRaw
+
+读取已有的 dsl_raw.json 文件。如果文件不存在，提示用户先运行 `/fe-dev:ui-add`。
 
 ### 预留扩展
 

@@ -39,9 +39,12 @@ fe-dev/
 │   ├── ui-add/SKILL.md           # /fe-dev:ui-add — 设计稿分析
 │   ├── ui-gen/SKILL.md           # /fe-dev:ui-gen — 代码生成
 │   ├── ui-update/SKILL.md        # /fe-dev:ui-update — 设计稿更新
+│   ├── ui-setup/SKILL.md         # /fe-dev:ui-setup — MasterGo API 配置
 │   └── ui-check/SKILL.md         # /fe-dev:ui-check — 质量检查
 ├── scripts/
 │   └── init-nuxt4-element.sh     # Element Plus 初始化脚本
+├── config/                       # 配置文件（gitignore）
+│   └── mastergo.json.example     # MasterGo PAT 配置模板
 ├── templates/                    # feat-new 和 ui 使用的模板
 ├── docs/                         # 分析和适配文档
 └── references/

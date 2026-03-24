@@ -48,6 +48,7 @@
 
 | 命令 | 说明 |
 |------|------|
+| `/fe-dev:ui-setup` | 配置 MasterGo API 访问凭证（PAT） |
 | `/fe-dev:ui-add <url> <name>` | 分析 MasterGo 设计稿，生成设计规格 |
 | `/fe-dev:ui-gen [page-id]` | 基于设计规格生成 Vue 页面代码 |
 | `/fe-dev:ui` | 查看设计稿转换状态 |
@@ -62,37 +63,25 @@
 | `/fe-dev:spec req-gen` | 分析需求文档，生成需求分析和执行计划 |
 | `/fe-dev:spec req-exec` | 按需求计划逐任务执行开发（支持断点续传） |
 
-## 可选依赖
+## 依赖
 
-fe-dev 核心功能无需额外依赖。以下依赖仅在特定命令中使用，未安装时对应功能会降级或跳过。
-
-### MasterGo MCP（可选）
+### MasterGo API（UI 命令必需）
 
 **影响命令**: `/fe-dev:ui-add`、`/fe-dev:ui-update`、`/fe-dev:ui-gen`
 
-安装 MasterGo MCP 后，支持从 MasterGo 设计稿自动提取设计信息和下载图片资源。未安装时 UI 相关命令无法使用。
+使用前需配置 MasterGo Personal Access Token，支持从 MasterGo 设计稿自动提取设计信息和下载图片资源。
 
-在 `~/.claude.json` 中添加：
-
-```json
-{
-  "mcpServers": {
-    "mastergo": {
-      "args": [
-        "-y",
-        "@mastergo/magic-mcp",
-        "--token=***",
-        "--url=https://mastergo.com"
-      ],
-      "command": "npx"
-    }
-  }
-}
+```bash
+/fe-dev:ui-setup
 ```
 
-> **参数说明**：
-> - `--token`：替换为你的 MasterGo API Token
-> - `--url`：MasterGo 服务地址，默认为 `https://mastergo.com`。如果是**私有化部署**的 MasterGo，请配置为私有化地址（如 `https://mastergo.yourcompany.com`）
+按提示输入 PAT（格式 `mg_...`，在 MasterGo 平台「个人设置 → API 管理」中创建）和服务地址。
+
+> **私有化部署**：如果 MasterGo 是私有化部署，在 ui-setup 时输入对应地址（如 `https://mastergo.yourcompany.com`）。
+
+## 可选依赖
+
+fe-dev 核心功能无需额外依赖。以下依赖仅在特定命令中使用，未安装时对应功能会降级或跳过。
 
 ### superpowers（可选）
 
@@ -161,14 +150,17 @@ fe-dev/
 │   ├── feat-gen/SKILL.md         # 生成开发/测试计划（依赖 superpowers）
 │   ├── feat-exec/SKILL.md        # 执行开发任务
 │   ├── feat-update/SKILL.md      # 需求变更管理
-│   ├── spec/SKILL.md             # 规范工具集（api-sync、req-gen）
+│   ├── spec/SKILL.md             # 规范工具集（api-sync、req-gen、req-exec）
 │   ├── ui/SKILL.md               # 设计稿列表
+│   ├── ui-setup/SKILL.md         # MasterGo API 配置
 │   ├── ui-add/SKILL.md           # 设计稿分析
 │   ├── ui-gen/SKILL.md           # 代码生成
 │   ├── ui-update/SKILL.md        # 设计稿更新
 │   └── ui-check/SKILL.md         # 质量检查
 ├── scripts/
 │   └── init-nuxt4-element.sh
+├── config/
+│   └── mastergo.json.example     # MasterGo PAT 配置模板
 ├── templates/
 │   ├── feat-index.md
 │   ├── feat-plan.md
