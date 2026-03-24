@@ -193,6 +193,34 @@ import { useXxxService } from '~/composables/useXxxService'
 - 当 EP 组件内包含较长文本且设计稿中该文本换行时，在 `<style scoped>` 中添加 `:deep()` 覆盖
 - 短文本场景（如按钮单个词）保持 EP 默认 nowrap，不覆盖
 
+#### EP 组件尺寸不匹配覆盖
+
+当 spec 中组件区域标注了 `height-override`（设计稿高度不等于 EP 预设 24/32/40px），**提示用户确认**是否需要 `:deep()` 覆盖，而非直接写入：
+
+```
+📏 尺寸不匹配检测:
+  ⚠️ ElInput: 设计稿 36px, EP default=32px, 差值 4px
+     → 覆盖代码: :deep(.el-input__wrapper) { height: 36px; line-height: 36px }
+     → 是否覆盖？差值较小，可忽略使用 EP 默认值
+```
+
+用户选择：
+- **覆盖** → 写入 `:deep()` 样式
+- **忽略** → 使用最接近的 EP size，接受微小差异
+
+**需要覆盖的内部选择器：**
+
+| 组件 | 需覆盖的选择器 |
+|------|-------------|
+| ElInput | `.el-input__wrapper` |
+| ElButton | `.el-button`（直接加在父级 class 上即可） |
+| ElSelect | `.el-select__wrapper` |
+| ElDatePicker | `.el-input__wrapper` |
+| ElRadio | `.el-radio__inner`（调整圆圈大小） |
+| ElCheckbox | `.el-checkbox__inner`（调整方框大小） |
+
+覆盖时需同时调整 `line-height: {height}px`，确保文字垂直居中。
+
 #### Tailwind 常用 class 参考
 
 详见 `<skill-path>/references/ui-utils.md` 中的"Tailwind 常用 class"表。
@@ -225,11 +253,24 @@ import { useXxxService } from '~/composables/useXxxService'
 - 已存在且值不同 → 提示用户确认是否覆盖
 - 不存在 → 提示用户是否新增
 
-**9b. Tailwind 扩展 tokens**
+**9b. Tailwind 扩展 tokens（颜色引用 EP 变量）**
 
-检查 `tailwind.config.ts` 中是否已有对应配置：
-- 已存在且值不同 → 提示用户确认
-- 不存在 → 提示用户是否新增
+检查 `tailwind.config.ts` 中的颜色类配置：
+
+- 如果 `tailwind.config.ts` 中的颜色是**硬编码 hex 值**（如 `primary: '#6B21A8'`），且与 Element Plus 主题 token 对应（如 `--el-color-primary`），建议改为引用 CSS 变量：
+  ```ts
+  // ❌ 硬编码，与 EP 主色不同步
+  primary: { DEFAULT: '#6B21A8' }
+
+  // ✅ 引用 EP 变量，保持单一数据源
+  primary: {
+    DEFAULT: 'var(--el-color-primary)',
+    light: 'var(--el-color-primary-light-3)',
+    lighter: 'var(--el-color-primary-light-5)',
+    dark: 'var(--el-color-primary-dark-2)',
+  }
+  ```
+- 非颜色的 Tailwind 扩展 token（字体、间距等）正常检查，已存在且值不同 → 提示用户确认；不存在 → 提示新增
 
 **9c. Scoped SCSS tokens**
 
@@ -244,7 +285,7 @@ import { useXxxService } from '~/composables/useXxxService'
 ```
 ✅ 页面代码已生成
 📄 文件: {target}
-🎨 新增 tokens: EP({n}) + Tailwind({n}) + SCSS({n})
+🎨 新增 tokens: EP({n}) + SCSS({n})
 📦 使用 types: {列表}
 📦 使用 services: {列表}
 🖼️ 图片: {n} 个成功, {n} 个失败（需手动替换到 {pageDir}/assets/images/）

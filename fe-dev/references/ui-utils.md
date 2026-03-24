@@ -78,7 +78,6 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
   "updatedAt": "{ISO date}",
   "tokens": {
     "element-plus": {},
-    "tailwind": {},
     "scoped": {}
   }
 }
@@ -308,6 +307,7 @@ MasterGo DSL 的 TEXT 节点通过 `textMode` 字段声明文本行为：
 - 可点击元素（`<a>`、`<button>`、有 `@click` 的元素）应有 `cursor-pointer` class
 - hover 状态应有 `transition`（150-300ms）
 - 颜色变化应有 `transition: color 200ms` 而非 `transition: all`
+- 有 `transition` 的可点击元素**必须配对 `hover:` 效果**（如 `hover:opacity-80`、`hover:underline`），否则 transition 无实际作用
 
 ### 可访问性（warning 级别）
 

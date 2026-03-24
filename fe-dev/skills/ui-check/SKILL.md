@@ -62,6 +62,7 @@ git branch --show-current
 - 硬编码色值 → 替换为已注册的 design token（如 `#02B3D6` → `var(--el-color-primary)`）
 - 缺少 `cursor-pointer` → 为可点击元素添加 `cursor-pointer` class
 - 缺少 `transition` → 为 hover 状态添加 `transition: color 200ms`
+- 有 `transition` 但无 `hover:` 效果 → 为可点击元素添加 `hover:opacity-80` class（确保 transition 有实际作用目标）
 - 缺少 `alt` 属性 → 为 `<img>` 添加 `alt=""`
 - flex 容器内文本子项缺少 `min-w-0` → 添加 `min-w-0` class（防止文本溢出容器）
 - 宽度约束容器内文本缺少 `break-words` → 添加 `break-words` class（确保文本可换行）

@@ -13,11 +13,11 @@
 |------|-----|------|
 | <!-- 例：--el-color-primary | #02B3D6 | 品牌主色 --> |
 
-### Tailwind 扩展
+### Tailwind 扩展（非颜色）
 
 | 变量 | 值 | 说明 |
 |------|-----|------|
-| <!-- 例：colors.brand | #02B3D6 | 品牌色 --> |
+| <!-- 仅定义非颜色类 token，如 fontFamily、spacing。颜色统一走 Element Plus 主题层 --> |
 
 ### Scoped SCSS
 
@@ -31,10 +31,11 @@
 
 ## 组件清单
 
-| 区域 | Element Plus 组件 | EP 属性 | Tailwind 样式 | 说明 |
-|------|-------------------|---------|--------------|------|
-| <!-- 例：搜索栏 | ElInput, ElButton | size="default" | flex, gap-4 | 关键词 + 状态筛选 -->
-| <!-- 例：登录表单 | ElForm | label-position="top" | w-full | 邮箱+密码 --> |
+| 区域 | Element Plus 组件 | EP 属性 | height-override | Tailwind 样式 | 说明 |
+|------|-------------------|---------|----------------|--------------|------|
+| <!-- 例：搜索栏 | ElInput, ElButton | size="default" | — | flex, gap-4 | 关键词 + 状态筛选 -->
+| <!-- 例：登录表单 | ElForm | label-position="top" | — | w-full | 邮箱+密码 -->
+| <!-- 例：登录输入框 | ElInput | size="default" | 36px | — | 设计稿高度 36px，EP default=32px --> |
 
 ## 字段映射
 
