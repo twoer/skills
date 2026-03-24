@@ -40,57 +40,54 @@ git branch --show-current
 - 存在 → 读取现有内容
 - 不存在 → 从 `<skill-path>/templates/ui-pages.json` 创建，同步创建 `specs/` 子目录
 
-### 步骤 4: 获取设计数据
+### 步骤 4: 获取设计数据并保存 DSL
 
-按优先级尝试，取第一个成功的：
+**4a. 读取 MasterGo 配置**
 
-**4a. 尝试 getD2c**
+读取 `<skill-path>/config/mastergo.json`，获取 `pat` 和 `base_url`。
+- 文件不存在或 `pat` 为空 → 提示用户先运行 `/fe-dev:ui-setup`，然后退出。
 
+**4b. 解析 URL**
+
+从用户提供的 `url` 参数中提取 fileId 和 layerId（详见 ui-utils.md "URL 解析"）：
+- 文件链 `https://mastergo.iflytek.com/file/{fileId}?layer_id={layerId}` → 正则提取 fileId，URL decode layerId（含 `/` 只取首段）
+- 短链 `https://mastergo.iflytek.com/goto/XXXXX` → 通过 `curl -sIL` 解析 redirect 获取 fileId + layerId；失败则报错提示使用文件链接
+
+**4c. 调用 DSL API**
+
+```bash
+curl -s -o {UI_DIR}/specs/{pageId}-dsl-raw.json \
+  -H "X-MG-UserAccessToken: {pat}" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  "{base_url}/mcp/dsl?fileId={fileId}&layerId={layerId}"
 ```
-mcp__mastergo__mcp__getD2c(contentId, documentId)
-```
 
-从 URL 提取参数：
-- 短链 `https://mastergo.iflytek.com/goto/XXXXX` → contentId = XXXXX, documentId = XXXXX
-- 文件链 `https://mastergo.iflytek.com/file/{fileId}?layer_id={layerId}` → 从 D2C URL 提取
+用 `-o` 直接写入文件，避免大响应撑爆 Bash 输出。
 
-成功 → 使用返回的 `code` 字段作为代码参考，跳到步骤 5。
+**错误处理**（通过检查 HTTP 状态码或文件内容判断）：
+- 401/403 → 提示 PAT 无效，重新运行 `/fe-dev:ui-setup`
+- 404 → 提示 URL 错误，检查 fileId/layerId
+- 非 200 → 报错退出
 
-**URL 编码重试**：如果 MCP 调用返回空或失败，且 `layerId` / `contentId` 包含 `:` 等特殊字符，使用 URL 编码后的值（如 `%3A`）重试一次。
+**4d. 预览 DSL 数据**
 
-**4b. 尝试 getDsl**
+读取 `{UI_DIR}/specs/{pageId}-dsl-raw.json` 的前 200 行，输出给用户预览，同时说明文件总大小。
 
-```
-mcp__mastergo__mcp__getDsl(shortLink: url)
-```
+**4e. 失败处理**
 
-成功 → 获取 DSL 节点树，跳到步骤 5。
-
-**大 DSL 处理**：当 getDsl 返回数据过大（MCP 工具将结果保存到临时文件），按以下流程处理：
-1. 从 MCP 输出中读取临时文件路径（路径模式：`/Users/.../tool-*.json`）
-2. 用 Read 工具分批读取临时文件内容
-3. 如果文件仍然过大无法一次性读取，按 JSON 层级只提取目标节点：
-   - 优先使用 `layerId` 参数重新调用 getDsl（文件链格式），缩小返回范围
-   - 无 layerId 时，从临时文件中找到与 `name` 参数最匹配的顶层节点，只分析该子树
-
-**文件链 + layerId 优先**：对于大型设计文件，推荐用户使用文件链接（含 `layer_id`）而非短链。短链返回整个设计文件，文件链 + layerId 只返回目标页面的节点树，大幅减少数据量。
-
-**URL 编码重试**：同 4a，如果失败且 URL 参数包含特殊字符，尝试 URL 编码后重试。
-
-**4c. 两者均失败**
-
-输出错误信息并退出：
+API 调用失败时，输出错误信息并退出：
 
 ```
 ❌ 无法获取设计稿数据。请检查：
-- URL 是否正确
+- URL 是否正确（推荐使用文件链接格式，包含 layer_id）
+- PAT 是否有效（运行 /fe-dev:ui-setup 重新配置）
 - 是否有 MasterGo 访问权限
-- MCP 服务是否正常运行
 ```
 
 ### 步骤 5: 分析设计数据
 
-AI 分析获取到的设计数据（D2C 代码或 DSL 节点树），提取以下信息：
+AI 分析获取到的设计数据（从步骤 4 保存的 `{UI_DIR}/specs/{pageId}-dsl-raw.json` 读取），提取以下信息：
 
 **5a. 语义分析（前置步骤）**
 

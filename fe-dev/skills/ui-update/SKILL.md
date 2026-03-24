@@ -36,13 +36,24 @@ git branch --show-current
 
 ### 步骤 4: 获取新的设计数据
 
-从 ui-pages.json 中读取该页面的 `mastergo` URL，按优先级尝试：
+从 ui-pages.json 中读取该页面的 `mastergo` URL，重新获取 DSL 数据。
 
-1. 尝试 `getD2c`
-2. 尝试 `getDsl`
-3. 两者均失败 → 报错退出
+**4a. 读取 MasterGo 配置**
 
-（调用方式同 `/fe-dev:ui-add` 步骤 4，含 URL 编码重试）
+读取 `<skill-path>/config/mastergo.json`，获取 `pat` 和 `base_url`。
+- 文件不存在或 `pat` 为空 → 提示用户先运行 `/fe-dev:ui-setup`，然后退出。
+
+**4b. 解析 URL 并调用 DSL API**
+
+（调用方式同 `/fe-dev:ui-add` 步骤 4b-4c，含短链解析和错误处理）
+
+**4c. 更新 dsl_raw.json**
+
+将新的 DSL 响应覆盖写入 `{UI_DIR}/specs/{pageId}-dsl-raw.json`。
+
+**4d. 失败处理**
+
+报错退出，提示用户检查 URL 或 PAT（运行 `/fe-dev:ui-setup` 重新配置）。
 
 ### 步骤 5: 生成差异报告
 
