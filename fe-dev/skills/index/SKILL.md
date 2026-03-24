@@ -50,6 +50,7 @@ description: Frontend development assistant for project initialization and manag
 | 命令 | 说明 |
 |------|------|
 | `/fe-dev:spec api-sync` | 从 OpenAPI 规范生成 TypeScript 类型和 Service |
+| `/fe-dev:spec req-gen` | 分析需求文档，生成需求分析和执行计划 |
 
 ## 项目模板
 

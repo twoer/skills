@@ -1,7 +1,7 @@
 ---
 name: ui-gen
 description: 基于设计规格生成 Vue 页面代码。触发词: "ui gen", "生成页面", "ui-gen", "设计转代码"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # UI Gen - 代码生成
@@ -36,6 +36,35 @@ git branch --show-current
 路径：`{UI_DIR}/specs/{pageId}-spec.md`
 
 如果不存在，提示先运行 `/fe-dev:ui-add`。
+
+### 步骤 3.5: 增强 design-spec（如有 plan.md）
+
+将 req-gen 的执行计划中的业务逻辑注入 design-spec，使 spec 成为视觉 + 业务的单一数据源。
+
+1. 获取 git 根目录和 branchKey：
+   ```bash
+   git rev-parse --show-toplevel
+   git branch --show-current
+   ```
+   `feat/xxx` → `xxx`；非 feat 分支 → 完整分支名。
+
+2. 检查 `{GIT_ROOT}/apps/frontend/docs/{branchKey}/plan.md` 是否存在。
+   - 不存在 → 跳过（纯视觉模式，不影响后续步骤）
+
+3. 读取 plan.md，提取与当前页面相关的任务条目：
+   - 通过页面路径（如 `pages/login/index.vue`）、模块名、组件名匹配
+   - 只提取**与当前页面直接相关**的条目，忽略其他页面的任务
+
+4. 将提取的业务逻辑写入 design-spec.md 的"业务需求"章节：
+   - 校验规则 → 写入"校验规则"表格
+   - 错误处理 → 写入"错误处理"表格
+   - 条件渲染 → 写入"条件逻辑"表格
+   - loading/error 态 → 写入"状态管理"表格
+
+5. 合并规则：
+   - design-spec 无"业务需求"章节 → 追加完整章节
+   - "业务需求"章节已有内容（手动编写）→ 合并，plan.md 内容不覆盖已有内容
+   - plan.md 无匹配条目 → 不修改 spec，跳过
 
 ### 步骤 4: 扫描项目上下文
 

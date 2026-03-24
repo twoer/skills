@@ -1,7 +1,7 @@
 ---
 name: ui-check
 description: 生成代码质量检查。触发词: "ui check", "质量检查", "ui-check"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # UI Check - 质量检查
@@ -28,7 +28,16 @@ git branch --show-current
 - 指定了 `page-id` 参数 → 只检查该页面
 - 未指定 → 检查所有 `status=converted` 或 `status=reviewed` 的页面
 
-### 步骤 3: 读取并扫描 .vue 文件
+### 步骤 3: 读取并扫描
+
+**3a. 扫描 design-spec 完整性（info 级别）**
+
+对每个目标页面，读取对应的 `{UI_DIR}/specs/{pageId}-spec.md`：
+
+- design-spec 无"业务需求"章节 → info："design-spec 缺少业务需求章节，建议运行 `/fe-dev:spec req-gen` 生成需求分析以提升代码业务逻辑覆盖率"
+- "业务需求"章节有内容，但"字段映射"表中的表单字段在"校验规则"表中无对应条目 → info："字段 {字段名} 未定义校验规则，建议补充"
+
+**3b. 扫描 .vue 文件**
 
 对每个目标文件，读取内容并对照质检规则扫描。
 

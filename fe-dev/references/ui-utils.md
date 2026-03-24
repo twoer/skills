@@ -151,6 +151,29 @@ type PageStatus = "pending" | "spec-done" | "converted" | "reviewed"
 | 导航 | ElMenu, ElMenuItem, ElBreadcrumb, ElTabs, ElTabPane, ElDropdown |
 | 通用 | ElButton, ElCard, ElTag, ElBadge, ElTooltip, ElAvatar, ElDivider, ElEmpty, ElSkeleton |
 
+### ElTableColumn 对齐规则
+
+生成 `<el-table-column>` 时，根据列的字段名或表头文字自动推断 `align` 属性：
+
+| 列数据类型 | 推断条件 | `align` 值 |
+|-----------|---------|-----------|
+| 数字 / 金额 | 字段名含 `amount`、`price`、`fee`、`count`、`num`、`total`、`qty`、`money`；或表头含"金额"、"数量"、"价格"、"费用"、"合计" | `right` |
+| 日期 / 时间 | 字段名含 `date`、`time`、`at`（如 `createdAt`）；或表头含"日期"、"时间" | `center` |
+| 枚举 / 状态 | 字段名含 `status`、`type`、`state`、`level`；或表头含"状态"、"类型"、"等级" | `center` |
+| 操作列 | 表头为"操作"、"Action"、"action" | `center` |
+| 其他（文本、ID 等） | 默认 | 不设置（EP 默认左对齐） |
+
+**示例：**
+
+```vue
+<el-table-column prop="createdAt" label="创建时间" align="center" />
+<el-table-column prop="amount" label="金额" align="right" />
+<el-table-column prop="status" label="状态" align="center" />
+<el-table-column label="操作" align="center" />
+```
+
+> spec 中如果已明确记录 `align`，以 spec 为准；未记录时按此规则推断。
+
 ### EP 组件默认属性规则
 
 以下属性作为**默认行为**，生成代码时自动添加，无需设计稿明确标注：
@@ -372,3 +395,10 @@ MasterGo DSL 的 TEXT 节点通过 `textMode` 字段声明文本行为：
 - ElInput 缺少 `clearable` → 提示添加
 - ElSelect 缺少 `clearable` 或 `filterable` → 提示添加
 - ElDatePicker 缺少 `clearable` → 提示添加
+- ElTableColumn 数字/金额列未设置 `align="right"` → 提示添加
+- ElTableColumn 日期/时间/枚举/状态/操作列未设置 `align="center"` → 提示添加
+
+### Design-spec 完整性检查（info 级别）
+
+- design-spec 无"业务需求"章节 → info："建议运行 `/fe-dev:spec req-gen` 生成需求分析，提升代码业务逻辑覆盖率"
+- "业务需求"章节有内容，但"字段映射"表中的表单字段在"校验规则"表中无对应条目 → info："字段 {字段名} 未定义校验规则，建议补充"
