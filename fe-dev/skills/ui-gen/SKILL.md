@@ -107,8 +107,16 @@ git branch --show-current
    - TEXT 节点的 `textMode` 不是 `"single-line"`（或 `textMode` 字段缺失）
    - 这是一个通用规则，适用于所有组件（ElCheckbox、ElRadio、ElButton 等），不仅限于特定组件类型
 7. 对满足推断条件的 flex 子项，额外补充 `min-w-0` class（防止 flex 子项内容溢出容器）
-8. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
-9. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
+8. **EP 组件尺寸不匹配推断**：遍历 DSL 节点时，对已映射到 EP 组件的节点（如 ElInput、ElButton、ElSelect、ElDatePicker），读取其 `height` / `bounds.height`，与 EP 预设尺寸（large=40px, default=32px, small=24px）比对。如果不匹配，记录到尺寸不匹配列表：
+   ```
+   EP 组件尺寸不匹配:
+     - ElInput (用户名): 设计稿 36px, EP default=32px
+     - ElInput (密码): 设计稿 36px, EP default=32px
+     - ElButton (登录): 设计稿 36px, EP default=32px
+   ```
+   此列表将在步骤 9d 中用于提示用户。
+9. 构建样式映射表：`{容器标识} → {Tailwind class 列表}`
+10. 如果 getDsl 失败，跳过此步骤，仅依赖 spec 生成代码（降级模式，输出提示）
 
 ### 步骤 7: 生成代码
 
@@ -275,6 +283,28 @@ import { useXxxService } from '~/composables/useXxxService'
 **9c. Scoped SCSS tokens**
 
 页面级 tokens 直接写入 .vue 文件的 `<style>` 部分，无需确认。
+
+**9d. EP 组件尺寸不匹配检测**
+
+合并两个来源的检测结果：
+
+1. **spec 中的 `height-override`**（ui-add 记录）
+2. **步骤 6 提取的 DSL 高度比对**（ui-gen 独立检测）
+
+对每个不匹配项，提示用户确认：
+
+```
+📏 尺寸不匹配检测:
+  ⚠️ ElInput (用户名): 设计稿 36px, EP default=32px, 差值 4px
+     → 覆盖代码: :deep(.el-input__wrapper) { height: 36px; line-height: 36px }
+     → 是否覆盖？差值较小，可忽略使用 EP 默认值
+```
+
+用户选择：
+- **覆盖** → 写入 `:deep()` 样式（选择器参见"EP 组件尺寸不匹配覆盖"章节）
+- **忽略** → 使用最接近的 EP size，接受微小差异
+
+> 此步骤独立于 spec 的 `height-override`，即使 spec 未记录，也能通过 DSL 数据检测出尺寸差异。
 
 ### 步骤 10: 更新 ui-pages.json
 
