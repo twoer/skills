@@ -151,17 +151,22 @@ https://mastergo.iflytek.com/file/{fileId}?layer_id={layerId}
 - fileId: 正则 `/file/([^/?]+)` 提取
 - layerId: 从 `layer_id` 参数获取，需 URL decode；如果 decode 后含 `/`（复合路径），只取 `/` 前的部分
 
-**短链**（支持但会获取整个设计文件，数据量大）：
+**短链**：
 ```
 https://mastergo.iflytek.com/goto/XXXXX
 ```
 - 短链处理策略：
-  1. 通过 HTTP redirect 解析：
+  1. 通过 HTTP redirect 解析（**注意：不能带 PAT header，否则返回 404**）：
      ```bash
-     curl -sIL "https://mastergo.iflytek.com/goto/XXXXX" 2>/dev/null | grep -i "^location:" | tail -1
+     # 获取 redirect URL（不带任何认证 header）
+     REDIRECT_URL=$(curl -s -o /dev/null -w "%{redirect_url}" "https://mastergo.iflytek.com/goto/XXXXX")
+     # 提取 fileId
+     FILE_ID=$(echo "$REDIRECT_URL" | sed -n 's|.*/file/\([^/?]*\).*|\1|p')
+     # 提取 layerId（需 URL decode）
+     LAYER_ID_RAW=$(echo "$REDIRECT_URL" | sed -n 's|.*layer_id=\([^&]*\).*|\1|p')
+     LAYER_ID=$(python3 -c "import urllib.parse,sys; print(urllib.parse.unquote(sys.argv[1]))" "$LAYER_ID_RAW")
      ```
-     从 Location header 提取 fileId + layerId
-  2. 如果 redirect 解析失败（如 JS 跳转），报错提示用户使用文件链接
+  2. 如果 redirect URL 为空或未解析到 fileId/layerId，报错提示用户使用文件链接
 
 > **推荐**：优先使用文件链接（含 `layer_id`），只返回目标页面的节点树，避免数据过大。
 

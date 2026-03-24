@@ -51,7 +51,7 @@ git branch --show-current
 
 从用户提供的 `url` 参数中提取 fileId 和 layerId（详见 ui-utils.md "URL 解析"）：
 - 文件链 `https://mastergo.iflytek.com/file/{fileId}?layer_id={layerId}` → 正则提取 fileId，URL decode layerId（含 `/` 只取首段）
-- 短链 `https://mastergo.iflytek.com/goto/XXXXX` → 通过 `curl -sIL` 解析 redirect 获取 fileId + layerId；失败则报错提示使用文件链接
+- 短链 `https://mastergo.iflytek.com/goto/XXXXX` → 通过 `curl -s -o /dev/null -w "%{redirect_url}"` 解析 redirect（不带 PAT header）获取 fileId + layerId；失败则报错提示使用文件链接（详见 ui-utils.md "URL 解析"）
 
 **4c. 调用 DSL API**
 
