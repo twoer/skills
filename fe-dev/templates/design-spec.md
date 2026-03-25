@@ -43,11 +43,12 @@
 
 ## 资源清单
 
-| 语义名 | 类型 | DSL 节点 ID | 用途 | 处理方式 |
-|--------|------|------------|------|---------|
-| <!-- 例：LogoIcon | LAYER (PNG) | 2:00986 | 侧边栏 Logo | 下载到 assets/images/ -->
-| <!-- 例：MenuIcon | PATH (SVG) | 2:00996 | 菜单图标"数据统计" | 导出为 SVG 组件 -->
-| <!-- 例：SearchIcon | INSTANCE | 2:1259 | 工具栏搜索 | 使用 EP 图标或导出 SVG -->
+| 语义名 | 类型 | DSL 节点 ID | 用途 | 视觉属性 | 处理方式 |
+|--------|------|------------|------|---------|---------|
+| <!-- 例：LogoIcon | LAYER (PNG) | 2:00986 | 侧边栏 Logo | 120x40 | 下载到 assets/images/ -->
+| <!-- 例：MenuIcon | PATH (SVG) | 2:00996 | 菜单图标 | fill=#333 | 导出为 SVG 组件 -->
+| <!-- 例：StatIconBg1 | SVG_ELLIPSE | 2:00701 | 图标圆形背景 | 56x56, fill=#F1FDFA | 导出为 SVG 组件 -->
+| <!-- 例：StatIconWrapper | FRAME | 2:00702 | 图标容器 | 36x36 | 包裹 PATH 图标 -->
 
 ## 组件清单
 

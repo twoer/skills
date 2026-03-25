@@ -101,10 +101,24 @@ AI 分析获取到的设计数据（从步骤 4 保存的 `{UI_DIR}/specs/{pageI
 4. **智能合并**：忽略或合并纯粹用于设计定位的无意义包裹层（无背景色、无边框、仅用于间距调整的 FRAME），生成反映代码结构的干净树
 5. **INSTANCE 识别**：标记 DSL 中的 INSTANCE 节点，记录其对应的组件类型
 6. **叠加检测**：对比节点的视觉边界（`bounds` / `layoutStyle`），当文本/Logo 节点的边界与图片/容器节点重叠时，标记为**覆盖层关系**（overlay），而非兄弟关系。覆盖层在组件树中标注为 `(覆盖层)`。**必须**在 spec 的"布局结构"语义组件树中，以 `[x={n}, y={n}]` 的格式记录覆盖层相对于其父容器的精确定位坐标（从 `bounds.x`、`bounds.y` 提取），例如：`HeroText (覆盖层) [x=40, y=100]`
-7. **资源节点记录**：对标注为 `(图标)` 或 `(图片)` 的节点，额外记录其 DSL 节点 ID 和资源类型，写入 spec 的"资源清单"部分：
+7. **资源节点记录**：对标注为 `(图标)` 或 `(图片)` 的节点，额外记录其 DSL 节点 ID、资源类型和视觉属性，写入 spec 的"资源清单"部分：
    - `type: "LAYER"` + `fill` 含 `url` → 图片资源（PNG/JPG）
    - `type: "PATH"` / `SVG_ELLIPSE` → SVG 矢量资源
    - `type: "INSTANCE"` + 名称含 `icon` → 组件图标（检查是否有可提取的矢量内容）
+   - `type: "SVG_ELLIPSE"` → 额外提取 `layoutStyle`（尺寸，如 56x56）和 `fill` 引用的实际颜色值（通过 `styles` 字典解析引用，详见 ui-utils.md），记录格式：`SVG_ELLIPSE (56x56, fill=#F1FDFA)`
+   - `type: "FRAME"` 且子节点包含 PATH/SVG_ELLIPSE 的图标容器 → 额外提取容器尺寸和子 PATH 的 fill 颜色，记录格式：`FRAME (36x36, icon-wrapper)`
+
+8. **PATH/SVG 背景节点解析**：对 DSL 中的 PATH 和 SVG_ELLIPSE 节点执行特殊解析，提取隐含的视觉属性（详见 ui-utils.md "DSL 特殊节点解析规则"）：
+
+   **PATH 背景圆角提取**（适用于名称含"背景"、"模块"、"card"、"容器"等语义的 PATH 节点）：
+   - 当节点无直接 `borderRadius` 属性时，从 SVG path data 中解析圆角值
+   - 解析规则：读取 `path.data`，匹配模式 `M{n} {y} L...`，`M` 后第一个数字即为圆角半径
+   - 提取结果标注到语义组件树中：`FilterSection (容器) [radius=8px, shadow=0px 0px 4px...]`
+
+   **Effect 阴影提取**（适用于含有 `effect` 字段的 PATH/FRAME 节点）：
+   - 读取节点的 `effect` 引用 key，在 `styles` 字典中解析实际 `box-shadow` 值
+   - 空数组 `[]` = 无阴影，不应生成 token
+   - 提取结果同样标注到语义组件树中
 
 输出语义化组件树（保存到 spec 的"布局结构"部分）：
 
@@ -136,6 +150,24 @@ AI 分析获取到的设计数据（从步骤 4 保存的 `{UI_DIR}/specs/{pageI
 - 提取的是**语义 tokens**（品牌色、背景色、圆角等），不是原始 DSL 节点值
 - **颜色类 token 只写入 Element Plus 主题层**，不重复定义 Tailwind 扩展色值。Tailwind 通过引用 `var(--el-*)` CSS 变量消费颜色，保持单一数据源（详见 ui-gen 步骤 9b）
 - 非颜色的 Tailwind 扩展 token（如字体、间距 scale）仍可单独定义
+
+**border-radius 提取规则**：
+
+| 优先级 | 来源 | 提取方式 |
+|--------|------|---------|
+| 1 | 节点的 `borderRadius` CSS 属性 | 直接读取（FRAME/LAYER/INSTANCE） |
+| 2 | 父 PATH 背景节点的 SVG path data | 按步骤 5a 规则 8 解析 `M{n}` 模式 |
+| 3 | 推断为 0 | 无上述来源时 |
+
+**shadow/effect 提取规则**：
+
+阴影效果在 DSL 中使用间接引用（详见 ui-utils.md "Effect/Shadow 引用解析"），提取时**必须**解析引用链：
+
+1. 读取节点的 `effect` 字段（如 `"effect_2:06660"`）
+2. 在 DSL 顶层 `styles` 字典中查找：`styles["effect_2:06660"].value`
+3. `value` 是 CSS 字符串数组：空数组 `[]` → 无阴影；非空数组 → 提取实际 `box-shadow` 值
+4. **禁止**使用其他节点的 effect 值作为替代
+5. 提取结果映射为 Scoped SCSS token，记录实际 shadow 值（如 `0px 0px 4px 0px rgba(17, 64, 115, 0.12)`），而非 EP 变量值
 
 **5c. 识别布局结构**
 
@@ -256,7 +288,11 @@ grep -rn "use.*Service" app/composables/ --include="*.ts"
 {UI_DIR}/specs/{pageId}-spec.md
 ```
 
-**必须填充的资源清单**：将步骤 5a 中识别的所有资源节点（图标、图片）填入模板的"资源清单"表格，包括语义名、类型、DSL 节点 ID、用途、处理方式。此清单是 ui-gen 步骤 5 下载资源的直接依据。
+**必须填充的资源清单**：将步骤 5a 中识别的所有资源节点（图标、图片）填入模板的"资源清单"表格，包括语义名、类型、DSL 节点 ID、用途、**视觉属性**（尺寸、fill 颜色等）、处理方式。对于图标类资源：
+   - SVG_ELLIPSE 图标背景 → 记录尺寸和颜色，如：`56x56, fill=#F1FDFA`
+   - FRAME 图标容器 → 记录尺寸，如：`36x36`
+   - PATH 图标形状 → 记录 fill 颜色（如有）
+此清单是 ui-gen 步骤 5 下载资源的直接依据。
 
 **业务需求章节**：模板中包含"业务需求"空章节（校验规则、错误处理、条件逻辑、状态管理四个空表格）。ui-add 阶段不填充此章节，由 ui-gen 步骤 3.5 从 plan.md 自动增强，或由开发者手动填写。
 

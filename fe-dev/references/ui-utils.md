@@ -208,6 +208,34 @@ https://mastergo.iflytek.com/goto/XXXXX
 3. **非 nuxt-svgo 项目** — SVG 降级为图片引用（`./assets/images/xxx.svg`）
 4. **禁止用 EP 图标替代设计稿自定义图标/Logo** — 仅当资源提取失败时才允许临时替代，且必须记入 TODO list
 
+### DSL 特殊节点解析规则
+
+#### PATH 节点 border-radius 提取
+
+MasterGo 将圆角矩形导出为 PATH 节点时，圆角值编码在 SVG path data 中：
+
+- **模式**：`M{radius} {y} L{width-radius} {y} C{width-k} {y} {width} {k} {width} {radius}...`
+- **提取规则**：path data 中 `M` 后的第一个数字即为圆角半径（px）
+- **适用条件**：PATH 节点名称含"背景"、"模块"、"card"、"容器"等语义，且节点无直接 `borderRadius` CSS 属性
+- **示例**：`M8 0 L272 0 C276.418 0 280 3.58172 280 8...` → radius = 8px
+
+#### Effect/Shadow 引用解析
+
+DSL 中的阴影效果使用间接引用：
+
+1. 节点的 `effect` 字段存储 token key（如 `"effect_2:06660"`）
+2. 实际 CSS 值在 `styles["effect_2:06660"].value` 中（数组格式）
+3. 空数组 `[]` = 无阴影；非空数组 = 提取 `box-shadow` 值
+4. **禁止跨节点借用** — 每个节点必须使用自身的 effect 引用
+
+#### SVG_ELLIPSE 颜色解析
+
+SVG_ELLIPSE 节点的 `fill` 通常是样式引用而非直接颜色值：
+
+1. 读取 `fill` 字段（如 `"paint_0:0311"`）
+2. 在 `styles["paint_0:0311"].value` 中查找实际颜色
+3. `value` 是颜色字符串数组，取第一个非空值
+
 ### Element Plus 组件映射
 
 | 场景 | 组件 |
