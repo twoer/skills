@@ -15,6 +15,16 @@
         "name": "twoer",
         "email": "zhangkun_net@hotmail.com"
       }
+    },
+    {
+      "name": "repo",
+      "description": "Git 操作辅助工具集",
+      "version": "1.0.0",
+      "source": "./repo",
+      "author": {
+        "name": "twoer",
+        "email": "zhangkun_net@hotmail.com"
+      }
     }
   ]
 }
