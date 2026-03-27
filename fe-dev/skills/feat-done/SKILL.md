@@ -1,12 +1,13 @@
 ---
 name: feat-done
 description: 标记功能完成，准备合并。触发词: "feat done", "功能完成", "标记完成"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat Done - 标记功能完成
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 执行流程
 

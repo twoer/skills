@@ -15,11 +15,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ### 步骤 1: 分支验证
 
-```bash
-git branch --show-current
-```
-
-不以 `feat/` 开头则提示切换。
+分支检查同 ui-utils.md "分支检查"。
 
 ### 步骤 2: 读取并输出
 

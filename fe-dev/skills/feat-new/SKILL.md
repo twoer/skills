@@ -1,12 +1,13 @@
 ---
 name: feat-new
 description: 创建新功能开发工作流（目录 + Git 分支 + 文档模板）。触发词: "feat new", "新建功能", "创建功能", "开始新功能"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat New - 创建功能开发工作流
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 重要提示
 
@@ -78,6 +79,7 @@ mkdir -p docs/features/feat-{name}/dev
 | feat-exec.md | `docs/features/feat-{name}/dev/exec.md` |
 | feat-test.md | `docs/features/feat-{name}/dev/test.md` |
 | feat-review.md | `docs/features/feat-{name}/dev/review.md` |
+| feat-links.md | `docs/features/feat-{name}/requirements/links.md` |
 
 **index.md 变量替换：**
 

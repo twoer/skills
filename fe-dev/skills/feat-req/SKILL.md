@@ -1,12 +1,13 @@
 ---
 name: feat-req
 description: 管理功能关联的需求链接，支持添加、查看、同步需求文档。触发词: "feat req", "需求管理", "需求文档", "同步需求"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat Req - 需求文档管理
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 前置步骤：获取当前 feat 名称
 

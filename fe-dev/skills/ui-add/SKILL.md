@@ -39,11 +39,7 @@ name 缺失时**立即**询问用户，不进入后续步骤。
 
 ### 步骤 1: 配置检查 + 分支验证
 
-```bash
-git branch --show-current
-```
-
-不以 `feat/` 开头则提示用户切换到功能分支。
+分支检查同 ui-utils.md "分支检查"。
 
 读取 `<skill-path>/config/mastergo.json`，获取 `pat` 和 `base_url`。缺失则提示运行 `/fe-dev:ui-setup` 并退出。
 

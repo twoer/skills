@@ -5,6 +5,8 @@ description: 为当前项目生成 CLAUDE.md 文件。触发词: "claude init", 
 
 # Claude Init - 生成 CLAUDE.md
 
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+
 分析项目结构和技术栈，生成 CLAUDE.md 文件。
 
 ## 执行流程

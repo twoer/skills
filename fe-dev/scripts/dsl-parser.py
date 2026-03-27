@@ -96,17 +96,6 @@ def get_node_bounds(node: dict) -> dict | None:
     return None
 
 
-def get_text_content(node: dict) -> str | None:
-    """提取 TEXT 节点的文本内容。"""
-    if node.get("type") != "TEXT":
-        return None
-    text = node.get("characters") or node.get("text") or node.get("content")
-    if text:
-        t = str(text).strip()
-        return t[:50] + "..." if len(t) > 50 else t
-    return None
-
-
 def to_pascal_case(name: str) -> str:
     """转换为 PascalCase。"""
     if not name:

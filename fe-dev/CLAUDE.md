@@ -2,100 +2,40 @@
 
 前端开发助手，用于项目初始化和开发工作流管理。
 
-## 功能
+## 命令体系
 
-- 智能检测当前目录是否有前端项目
-- 交互式初始化 Nuxt4 + Element Plus 项目
-- 选择项目类型（普通项目 / 中台项目）
-- 可选关联远程 Git 仓库
-- 自动生成研发规范配置（ESLint、Prettier、Stylelint）
-- 内置 useHttp composable 和示例 service
-- Feature 工作流管理（需求同步、开发计划、测试记录）
-- UI 设计稿转代码（MasterGo DSL → Vue 页面）
-- OpenAPI 规范同步生成 TypeScript 类型和 Service
+- **项目初始化**: `/fe-dev:init`、`/fe-dev:claude-init`
+- **Feature 工作流**: `/fe-dev:feat-new` → `feat-req` → `feat-gen` → `feat-exec` → `feat-done` → `feat-archive`
+- **UI 设计稿**: `/fe-dev:ui-setup` → `ui-add` → `ui-gen` → `ui-check`
+- **Spec 规范**: `/fe-dev:spec api-sync`、`spec req-gen`、`spec req-exec`
 
-## 文件结构
+完整命令列表见 `/fe-dev:index` 或 README.md。
 
-```
-fe-dev/
-├── .claude-plugin/
-│   └── plugin.json              # 插件配置（声明 name: fe-dev）
-├── skills/                       # 所有子 skill
-│   ├── index/SKILL.md            # /fe-dev:index — 命令索引
-│   ├── init/SKILL.md             # /fe-dev:init — 项目初始化
-│   ├── claude-init/SKILL.md      # /fe-dev:claude-init — 生成 CLAUDE.md
-│   ├── feat-new/SKILL.md         # /fe-dev:feat-new — 创建功能工作流
-│   ├── feat-list/SKILL.md        # /fe-dev:feat-list — 列出功能
-│   ├── feat-show/SKILL.md        # /fe-dev:feat-show — 查看功能详情
-│   ├── feat-log/SKILL.md         # /fe-dev:feat-log — 记录开发日志
-│   ├── feat-done/SKILL.md        # /fe-dev:feat-done — 标记功能完成
-│   ├── feat-archive/SKILL.md     # /fe-dev:feat-archive — 归档功能
-│   ├── feat-req/SKILL.md         # /fe-dev:feat-req — 需求文档管理
-│   ├── feat-gen/SKILL.md         # /fe-dev:feat-gen — 生成开发/测试计划
-│   ├── feat-exec/SKILL.md        # /fe-dev:feat-exec — 执行开发任务
-│   ├── feat-update/SKILL.md      # /fe-dev:feat-update — 需求变更管理
-│   ├── spec/SKILL.md             # /fe-dev:spec — OpenAPI 同步 + 需求分析(req-gen) + 需求执行(req-exec)
-│   ├── ui/SKILL.md               # /fe-dev:ui — 设计稿列表
-│   ├── ui-add/SKILL.md           # /fe-dev:ui-add — 设计稿分析
-│   ├── ui-gen/SKILL.md           # /fe-dev:ui-gen — 从 DSL 生成代码
-│   ├── ui-update/SKILL.md        # /fe-dev:ui-update — 设计稿更新
-│   ├── ui-setup/SKILL.md         # /fe-dev:ui-setup — MasterGo API 配置
-│   └── ui-check/SKILL.md         # /fe-dev:ui-check — 质量检查
-├── scripts/
-│   └── init-nuxt4-element.sh     # Element Plus 初始化脚本
-├── config/                       # 配置文件（gitignore）
-│   └── mastergo.json.example     # MasterGo PAT 配置模板
-├── templates/                    # feat-new 和 ui 使用的模板
-├── docs/                         # 分析和适配文档
-└── references/
-    ├── element-setup.md           # Element Plus 配置参考
-    ├── feat-utils.md             # Feature 共享工具
-    └── ui-utils.md               # UI Skill 共享工具
-```
+## 技术栈
 
-## 使用方式
+Nuxt 4 + Vue 3 + TypeScript + Element Plus + Tailwind CSS + Scoped SCSS + Pinia
 
-```bash
-# 查看所有可用命令
-/fe-dev:index
+## 关键约定
 
-# 初始化项目
-/fe-dev:init
+### 路径约定
 
-# 创建功能开发工作流
-/fe-dev:feat-new
+- Feature 文档：`docs/features/feat-{name}/`
+- UI 设计数据：`docs/features/feat-{name}/ui/`（挂在 feat 目录下）
+- Spec 数据：`apps/frontend/docs/{branchKey}/`
 
-# 同步需求文档
-/fe-dev:feat-req sync
+### 分支约定
 
-# 生成开发计划
-/fe-dev:feat-gen
+- Feature/UI 工作在 `feat/{name}` 分支，非 feat 分支提示切换
+- Spec 对非 feat 分支优雅降级（用完整分支名）
 
-# 执行开发任务
-/fe-dev:feat-exec
+### UI 样式优先级
 
-# 同步 OpenAPI 规范
-/fe-dev:spec api-sync
-```
+1. Element Plus 组件
+2. Tailwind CSS class（必须写在 `<template>` class 属性上）
+3. Scoped SCSS（仅 `:deep()` 和装饰性样式）
+4. 禁止：内联 style、全局 SCSS、!important
 
-## 初始化流程
+## 共享文件
 
-1. 检测项目状态
-2. 选择项目类型（普通/中台）
-3. 是否关联远程仓库
-4. 执行初始化脚本
-5. 生成 CLAUDE.md
-
-## 项目类型
-
-### 普通项目
-- 默认布局（页头 + 页脚）
-- 首页
-- 关于页
-
-### 中台项目
-- 登录页面
-- 管理端布局（左侧菜单 + 顶部导航）
-- 仪表盘
-- 用户管理（CRUD 示例）
-- 系统设置
+- `references/feat-utils.md` — feat-* 系列共享命令和路径
+- `references/ui-utils.md` — UI 系列共享约定和 API 调用

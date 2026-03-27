@@ -1,7 +1,7 @@
 ---
 name: ui-setup
 description: 配置 MasterGo API 访问凭证（PAT）。触发词: "ui setup", "配置 MasterGo", "ui-setup"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # UI Setup - MasterGo API 配置

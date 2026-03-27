@@ -1,12 +1,13 @@
 ---
 name: feat-log
 description: 快速记录开发日志。触发词: "feat log", "开发日志", "记录日志"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat Log - 记录开发日志
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 执行流程
 

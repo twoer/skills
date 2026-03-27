@@ -1,12 +1,13 @@
 ---
 name: feat-update
 description: 需求变更管理，追加变更内容到 extra.md 并生成变更计划。触发词: "feat update", "需求变更", "变更管理"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat Update - 需求变更管理
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 使用方式
 

@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, Skill
 # Feat Gen - 生成开发计划和测试计划
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## `/fe-dev:feat-gen [name]` - 生成完整计划
 

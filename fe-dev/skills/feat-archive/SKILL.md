@@ -1,12 +1,13 @@
 ---
 name: feat-archive
 description: 归档已完成的功能。触发词: "feat archive", "功能归档", "归档"
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Feat Archive - 归档功能
 
 > 共享工具: `<skill-path>/references/feat-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 执行流程
 

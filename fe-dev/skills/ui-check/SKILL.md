@@ -15,11 +15,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 ### 步骤 1: 分支验证 + 确定范围
 
-```bash
-git branch --show-current
-```
-
-不以 `feat/` 开头则提示切换。
+分支检查同 ui-utils.md "分支检查"。
 
 读取 `{UI_DIR}/ui-pages.json`：
 - 指定了 `page-id` → 只检查该页面

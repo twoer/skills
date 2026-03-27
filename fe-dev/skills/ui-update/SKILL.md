@@ -15,11 +15,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, Edit
 
 ### 步骤 1: 配置检查 + 分支验证
 
-```bash
-git branch --show-current
-```
-
-不以 `feat/` 开头则提示切换。检查 `{UI_DIR}/ui-pages.json` 和 `<skill-path>/config/mastergo.json` 是否存在。
+分支检查同 ui-utils.md "分支检查"。检查 `{UI_DIR}/ui-pages.json` 和 `<skill-path>/config/mastergo.json` 是否存在。
 
 ### 步骤 2: 确定更新目标
 
