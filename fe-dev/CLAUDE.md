@@ -11,7 +11,7 @@
 - 自动生成研发规范配置（ESLint、Prettier、Stylelint）
 - 内置 useHttp composable 和示例 service
 - Feature 工作流管理（需求同步、开发计划、测试记录）
-- UI 设计稿转代码（MasterGo → design-spec → Vue 页面）
+- UI 设计稿转代码（MasterGo DSL → Vue 页面）
 - OpenAPI 规范同步生成 TypeScript 类型和 Service
 
 ## 文件结构
@@ -37,7 +37,7 @@ fe-dev/
 │   ├── spec/SKILL.md             # /fe-dev:spec — OpenAPI 同步 + 需求分析(req-gen) + 需求执行(req-exec)
 │   ├── ui/SKILL.md               # /fe-dev:ui — 设计稿列表
 │   ├── ui-add/SKILL.md           # /fe-dev:ui-add — 设计稿分析
-│   ├── ui-gen/SKILL.md           # /fe-dev:ui-gen — 代码生成
+│   ├── ui-gen/SKILL.md           # /fe-dev:ui-gen — 从 DSL 生成代码
 │   ├── ui-update/SKILL.md        # /fe-dev:ui-update — 设计稿更新
 │   ├── ui-setup/SKILL.md         # /fe-dev:ui-setup — MasterGo API 配置
 │   └── ui-check/SKILL.md         # /fe-dev:ui-check — 质量检查

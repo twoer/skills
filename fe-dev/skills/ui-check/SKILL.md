@@ -6,92 +6,73 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 # UI Check - 质量检查
 
-检查生成的 .vue 文件是否符合 UI 规范。
+你是一位严格但务实的前端代码审查专家。你关注两类问题：影响用户体验的（可访问性、交互反馈、文本溢出）和影响可维护性的（样式规范、组件属性一致性）。你能自动修复明确的问题，对需要设计判断的问题列出供人工决策。
 
-> 共享工具: `<skill-path>/references/ui-utils.md`
-> **语言要求**：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/ui-utils.md`
+> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 执行流程
 
-### 步骤 1: 获取 feat 名称
+### 步骤 1: 分支验证 + 确定范围
 
 ```bash
 git branch --show-current
 ```
 
-不以 `feat/` 开头则提示用户切换到功能分支。
-
-### 步骤 2: 确定检查范围
+不以 `feat/` 开头则提示切换。
 
 读取 `{UI_DIR}/ui-pages.json`：
+- 指定了 `page-id` → 只检查该页面
+- 未指定 → 检查所有 `status=done` 的页面
 
-- 指定了 `page-id` 参数 → 只检查该页面
-- 未指定 → 检查所有 `status=converted` 或 `status=reviewed` 的页面
+### 步骤 2: 扫描 .vue 文件
 
-### 步骤 3: 读取并扫描
+对每个目标文件，读取内容并按以下规则扫描。
 
-**3a. 扫描 design-spec 完整性（info 级别）**
+**error 级别**：
+- 无内联 `style="..."`；`<style>` 必须有 `scoped`；表单字段必须有 `label`/`aria-label`
+- 禁止负像素边距（覆盖层用 `absolute`/`relative`）
+- Tailwind class 必须写在 `<template>` class 上，`<style>` 中须用 `@apply`
 
-对每个目标页面，读取对应的 `{UI_DIR}/specs/{pageId}-spec.md`：
+**warning 级别**：
+- 可点击元素 → `cursor-pointer`；hover → `transition`(150-300ms)
+- 颜色变化 → `transition: color 200ms`（非 `all`）；transition 必须配对 `hover:` 效果
+- `<img>` → `alt`；文字对比度 >= 4.5:1；`focus` 可见
+- flex 容器内文本子项 → `min-w-0`；宽度约束内文本 → `break-words`
+- ElInput 缺 `clearable`、ElSelect 缺 `clearable`/`filterable`、ElDatePicker 缺 `clearable`
+- ElTableColumn 数字/金额列缺 `align="right"`、日期/状态/操作列缺 `align="center"`
+- 禁止用 EP 图标替代设计稿自定义图标/Logo；资源清单有对应条目 → warning；无条目 → info
 
-- design-spec 无"业务需求"章节 → info："design-spec 缺少业务需求章节，建议运行 `/fe-dev:spec req-gen` 生成需求分析以提升代码业务逻辑覆盖率"
-- "业务需求"章节有内容，但"字段映射"表中的表单字段在"校验规则"表中无对应条目 → info："字段 {字段名} 未定义校验规则，建议补充"
-
-**3b. 扫描 .vue 文件**
-
-对每个目标文件，读取内容并对照质检规则扫描。
-
-质检规则详见 `<skill-path>/references/ui-utils.md` 中的"质检规则"部分。
-
-### 步骤 4: 输出检查结果
-
-按严重程度排序：
+### 步骤 3: 输出检查结果
 
 ```
-🔍 质量检查结果: {pageId}
+质量检查结果: {pageId}
 
-❌ Error (2):
+Error (2):
   - 第 45 行: 发现内联 style="color: red"
   - 第 12 行: <el-input> 缺少 label 或 aria-label
 
-⚠️ Warning (3):
+Warning (3):
   - 第 30 行: <a> 标签缺少 cursor-pointer class
   - 第 55 行: hover 效果缺少 transition
   - 第 60 行: 文字对比度不足（#999 on #fff = 2.8:1）
 
-ℹ️ Info (1):
+Info (1):
   - 建议使用 ElPagination 替代手动分页实现
 ```
 
-### 步骤 5: 自动修复 Warning
+### 步骤 4: 自动修复 Warning
 
-对步骤 4 中检测到的 warning 级别问题，尝试自动修复：
+**可自动修复**：
+- 硬编码色值 → 替换为已注册的 design token
+- 缺 `cursor-pointer` → 添加
+- 缺 `transition` → 添加 `transition: color 200ms`
+- 有 `transition` 但无 `hover:` → 添加 `hover:opacity-80`
+- `<img>` 缺 `alt` → 添加 `alt=""`
+- flex 文本子项缺 `min-w-0` → 添加
+- 宽度约束文本缺 `break-words` → 添加
+- EP 默认属性缺失 → 添加
 
-**可自动修复的 warning 类型：**
-- 硬编码色值 → 替换为已注册的 design token（如 `#02B3D6` → `var(--el-color-primary)`）
-- 缺少 `cursor-pointer` → 为可点击元素添加 `cursor-pointer` class
-- 缺少 `transition` → 为 hover 状态添加 `transition: color 200ms`
-- 有 `transition` 但无 `hover:` 效果 → 为可点击元素添加 `hover:opacity-80` class（确保 transition 有实际作用目标）
-- 缺少 `alt` 属性 → 为 `<img>` 添加 `alt=""`
-- flex 容器内文本子项缺少 `min-w-0` → 添加 `min-w-0` class（防止文本溢出容器）
-- 宽度约束容器内文本缺少 `break-words` → 添加 `break-words` class（确保文本可换行）
+**不可自动修复，记入 TODO**：EP 图标替代设计稿自定义图标
 
-**不可自动修复、需记入 TODO list 的 warning 类型：**
-- EP 图标替代设计稿自定义图标 — 需用户手动替换为对应 SVG 组件或图片资源
-
-**可自动修复的 EP 默认属性 warning：**
-- ElInput 缺少 `clearable` → 添加 `clearable`
-- ElSelect 缺少 `clearable` → 添加 `clearable`
-- ElSelect 缺少 `filterable` → 添加 `filterable`
-- ElDatePicker 缺少 `clearable` → 添加 `clearable`
-
-**执行流程：**
-1. 逐项修复 warning，输出修复详情
-2. 修复完成后重新执行步骤 3-4 检查
-3. 如果重新检查后无 error → 进入步骤 6
-4. 如果修复引入了新 error → 回退修复，保持 `converted` 状态
-
-### 步骤 6: 更新状态
-
-- 有 error → 状态保持 `converted`，提示用户修复后重新检查
-- 无 error（含已自动修复的 warning）→ 状态更新为 `reviewed`
+修复后重新检查。有 error → 保持当前状态提示修复。无 error → 输出通过。

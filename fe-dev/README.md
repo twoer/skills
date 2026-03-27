@@ -49,8 +49,8 @@
 | 命令 | 说明 |
 |------|------|
 | `/fe-dev:ui-setup` | 配置 MasterGo API 访问凭证（PAT） |
-| `/fe-dev:ui-add <url> <name>` | 分析 MasterGo 设计稿，生成设计规格 |
-| `/fe-dev:ui-gen [page-id]` | 基于设计规格生成 Vue 页面代码 |
+| `/fe-dev:ui-add <url> <name>` | 分析 MasterGo 设计稿，获取 DSL 并输出分析笔记 |
+| `/fe-dev:ui-gen [page-id]` | 从已有 DSL 数据重新生成 Vue 页面代码 |
 | `/fe-dev:ui` | 查看设计稿转换状态 |
 | `/fe-dev:ui-update [page-id]` | 设计稿差异更新 |
 | `/fe-dev:ui-check [page-id]` | 生成代码质量检查 |
@@ -125,9 +125,57 @@ npm install -g feishu-to-md-mcp
 - 自动生成研发规范配置（ESLint、Prettier、Stylelint）
 - 内置 useHttp composable 和示例 service
 - Feature 工作流管理（需求同步、开发计划、测试记录）
-- UI 设计稿转代码（MasterGo → design-spec → Vue 页面）
+- UI 设计稿转代码（MasterGo DSL → Vue 页面）
 - 需求文档分析与执行计划生成（Superpowers 集成）
 - OpenAPI 规范同步生成 TypeScript 类型和 Service
+
+## 项目文件创建清单
+
+以下命令会在**用户项目目录**中创建或修改文件，按影响范围分类：
+
+### 项目骨架（大量文件）
+
+| 命令 | 创建路径 | 说明 |
+|------|---------|------|
+| `/fe-dev:init` | 项目根目录 | 完整项目骨架：`package.json`、`nuxt.config.ts`、`app/`、`server/`、`.vscode/`、`.husky/`、ESLint/Prettier/Stylelint 配置等 |
+
+### 项目配置（少量文件）
+
+| 命令 | 创建路径 | 说明 |
+|------|---------|------|
+| `/fe-dev:claude-init` | `CLAUDE.md` | 项目开发规范和约定 |
+
+### 功能文档（`docs/features/`）
+
+| 命令 | 创建路径 | 说明 |
+|------|---------|------|
+| `/fe-dev:feat-new` | `docs/features/feat-{name}/` | `index.md`、`dev/plan.md`、`dev/exec.md`、`dev/test.md`、`dev/review.md`、`requirements/links.md` |
+| `/fe-dev:feat-req add/sync` | `docs/features/feat-{name}/requirements/` | `links.md`、`product-doc-v{n}.md`（同步后的需求文档）、`product-doc-diff-v{旧}-v{新}.md` |
+| `/fe-dev:feat-update` | `docs/features/feat-{name}/` | `requirements/extra.md`、`dev/plan.md`（追加任务）、`dev/change-{date}.md` |
+| `/fe-dev:feat-gen` | `docs/features/feat-{name}/` | `requirements/checklist.md`、`dev/plan.md`、`dev/test.md` |
+| `/fe-dev:spec req-gen` | `apps/frontend/docs/{branchKey}/` | `requirements.md`、`plan.md` |
+| `/fe-dev:spec req-exec` | `apps/frontend/docs/{branchKey}/` | `plan.md`（更新状态）、`exec.md`、业务代码文件 |
+
+### 业务代码（源码目录）
+
+| 命令 | 创建路径 | 说明 |
+|------|---------|------|
+| `/fe-dev:ui-gen` | `{target}` 指定的 `.vue` 文件 | 生成的 Vue 页面 + 可能的子组件 |
+| `/fe-dev:ui-update` | `{target}` 指定的 `.vue` 文件 | 根据差异重新生成/更新 |
+| `/fe-dev:ui-check` | `{target}` 指定的 `.vue` 文件 | 自动修复 warning 级别问题 |
+| `/fe-dev:spec api-sync` | `app/types/`、`app/composables/` | TypeScript 类型定义和 Service 文件 |
+| `/fe-dev:feat-exec` | 计划中涉及的代码文件 | 按任务步骤生成的实际业务代码 |
+
+### 设计数据（`docs/features/feat-{name}/ui/`）
+
+| 命令 | 创建路径 | 说明 |
+|------|---------|------|
+| `/fe-dev:ui-add` | `ui/ui-pages.json`、`ui/specs/{pageId}-dsl-raw.json`、`ui/specs/{pageId}-analysis.md` | 页面注册表、DSL 原始数据、分析笔记 |
+| `/fe-dev:ui-update` | `ui/specs/{pageId}-dsl-raw.json` | 覆盖写入新 DSL 数据 |
+
+### 不创建文件的命令（只读）
+
+`/fe-dev:index`、`/fe-dev:feat-list`、`/fe-dev:feat-show`、`/fe-dev:ui`
 
 ## 目录结构
 
@@ -154,7 +202,7 @@ fe-dev/
 │   ├── ui/SKILL.md               # 设计稿列表
 │   ├── ui-setup/SKILL.md         # MasterGo API 配置
 │   ├── ui-add/SKILL.md           # 设计稿分析
-│   ├── ui-gen/SKILL.md           # 代码生成
+│   ├── ui-gen/SKILL.md           # 从 DSL 重新生成代码
 │   ├── ui-update/SKILL.md        # 设计稿更新
 │   └── ui-check/SKILL.md         # 质量检查
 ├── scripts/
@@ -169,7 +217,7 @@ fe-dev/
 │   ├── feat-review.md
 │   ├── feat-links.md
 │   ├── ui-pages.json
-│   └── design-spec.md
+│   └── analysis-template.md
 ├── docs/
 │   ├── spec-kit-analysis.md
 │   └── spec-kit-adaptation.md
