@@ -13,7 +13,7 @@
 ### 👤 用户输入
 
 ```
-/fe-dev feat new
+/fe-dev:feat-new
 ```
 
 ### 🤖 Claude 输出
@@ -74,7 +74,7 @@ docs/features/feat-admin-role-permission/
 ### 👤 用户输入
 
 ```
-/fe-dev feat req sync
+/fe-dev:feat-req sync
 ```
 
 ### 🤖 Claude 输出
@@ -111,7 +111,7 @@ docs/features/feat-admin-role-permission/
 ### 👤 用户输入
 
 ```
-/fe-dev feat gen
+/fe-dev:feat-gen
 ```
 
 ### 🤖 Claude 输出
@@ -430,7 +430,7 @@ export default defineNuxtRouteMiddleware(to => {
 ### 👤 用户输入
 
 ```
-/fe-dev feat update composables/usePermission.ts hasMenuPermission 方法逻辑不对，
+/fe-dev:feat-update composables/usePermission.ts hasMenuPermission 方法逻辑不对，
 应该是 没有分配权限角色，就当做没有任何权限
 ```
 
@@ -476,7 +476,7 @@ return true;
 ### 👤 用户输入
 
 ```
-/fe-dev feat update 目前测试下来还有一个问题，EXTERNAL_ADMIN 用户登录后，
+/fe-dev:feat-update 目前测试下来还有一个问题，EXTERNAL_ADMIN 用户登录后，
 好像默认会到非 spend-statistics 页面，然后触发其他页面的请求，会提示 api 权限错误
 ```
 
@@ -588,10 +588,10 @@ else → /login
 
 | 命令 | 说明 |
 |------|------|
-| `/fe-dev feat new` | 创建新功能分支和目录 |
-| `/fe-dev feat req sync` | 同步飞书需求文档 |
-| `/fe-dev feat gen` | 生成开发/测试计划 |
-| `/fe-dev feat exec` | 执行开发任务 |
-| `/fe-dev feat update` | 需求变更，追加到 extra.md |
-| `/fe-dev feat log <name> <msg>` | 记录开发日志 |
-| `/fe-dev feat done <name>` | 标记功能完成 |
+| `/fe-dev:feat-new` | 创建新功能分支和目录 |
+| `/fe-dev:feat-req sync` | 同步飞书需求文档 |
+| `/fe-dev:feat-gen` | 生成开发/测试计划 |
+| `/fe-dev:feat-exec` | 执行开发任务 |
+| `/fe-dev:feat-update` | 需求变更，追加到 extra.md |
+| `/fe-dev:feat-log <name> <msg>` | 记录开发日志 |
+| `/fe-dev:feat-done <name>` | 标记功能完成 |

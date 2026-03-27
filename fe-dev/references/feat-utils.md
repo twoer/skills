@@ -1,10 +1,10 @@
-# Feat 共享工具
+# Feat 共享约定
 
-所有 `fe-dev:feat:*` skill 共用的工具函数和约定。
+所有 `fe-dev:feat:*` skill 共享的约定和工具函数。
 
 ---
 
-## 共享命令
+## 共享约定
 
 ### requireGitRepo
 
@@ -79,17 +79,20 @@ docs/features/feat-{name}/
 └── ui/                      # UI 设计稿转换
     ├── ui-pages.json        # 页面注册表
     └── specs/               # 设计规格文档
-        └── {pageId}-spec.md
+        ├── {pageId}-dsl-raw.json    # 原始 DSL 数据
+        └── {pageId}-analysis.md     # 分析笔记
 ```
 
 ## 状态枚举
 
 ```typescript
 type FeatStatus =
-  | "🚧 开发中"
-  | "🧪 测试中"
-  | "👀 审查中"
-  | "✅ 已完成"
-  | "📦 已归档"
-  | "❌ 已废弃"
+  | "📋 已创建"       // feat-new 完成
+  | "📝 需求采集中"    // feat-req sync 工作中
+  | "📐 计划生成中"    // feat-gen 工作中
+  | "🚧 开发中"       // feat-exec 工作中
+  | "✅ 已完成"       // feat-done 完成
+  | "📦 已归档"       // feat-archive 完成
 ```
+
+状态流转：`已创建 → 需求采集中 → 计划生成中 → 开发中 → 已完成 → 已归档`。每个状态由对应 skill 写入 `index.md`。

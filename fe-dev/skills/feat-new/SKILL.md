@@ -6,8 +6,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 # Feat New - 创建功能开发工作流
 
-> 共享工具: `<skill-path>/references/feat-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/feat-utils.md`
 
 ## 重要提示
 

@@ -1,3 +1,5 @@
+> **历史文档**：v3.2.0 重构后部分内容已过时（4 状态机、design-spec.md 等），仅供参考。
+
 # fe-dev:ui Skill Design
 
 ## Overview

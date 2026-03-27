@@ -9,7 +9,6 @@ allowed-tools: Read, Grep, Glob, Bash
 查看 UI 设计稿转换状态。
 
 > 共享约定: `<skill-path>/references/ui-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 执行流程
 

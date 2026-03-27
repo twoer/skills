@@ -1,6 +1,7 @@
 ---
 name: index
 description: Frontend development assistant for project initialization and management. Use this skill when the user wants to create a new frontend project, initialize a Nuxt4 project, set up a development environment, or when they mention "fe-dev", "前端开发", "初始化项目", "create project", "nuxt4 element plus", or need help with frontend project setup. Also trigger when the user is in an empty directory and wants to start coding a web application.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Frontend Development Assistant
@@ -50,9 +51,9 @@ description: Frontend development assistant for project initialization and manag
 
 | 命令 | 说明 |
 |------|------|
-| `/fe-dev:spec api-sync` | 从 OpenAPI 规范生成 TypeScript 类型和 Service |
-| `/fe-dev:spec req-gen` | 分析需求文档，生成需求分析和执行计划 |
-| `/fe-dev:spec req-exec` | 按需求计划逐任务执行开发（支持断点续传） |
+| `/fe-dev:spec-api-sync` | 从 OpenAPI 规范生成 TypeScript 类型和 Service |
+| `/fe-dev:spec-req-gen` | 分析需求文档，生成需求分析和执行计划 |
+| `/fe-dev:spec-req-exec` | 按需求计划逐任务执行开发（支持断点续传） |
 
 ## 项目模板
 

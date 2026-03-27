@@ -6,14 +6,15 @@ allowed-tools: Read, Grep, Glob, Bash, Write, Skill
 
 # Feat Gen - 生成开发计划和测试计划
 
-> 共享工具: `<skill-path>/references/feat-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/feat-utils.md`
 
 ## `/fe-dev:feat-gen [name]` - 生成完整计划
 
-### 步骤 1: 获取 feat 名称
+### 步骤 1: 获取 feat 名称 + 更新状态
 
 未指定 name 则从 `git branch --show-current` 获取。
+
+将 `index.md` 状态更新为 `📐 计划生成中`（当前为 `📝 需求采集中` 时）。
 
 ### 步骤 2: 检测需求文档
 

@@ -1,13 +1,12 @@
 ---
 name: feat-show
-description: 查看功能详情。触发词: "feat show", "功能详情", "查看功能"
+description: 查看功能详情。触发词: "feat show", "功能详情", "显示功能"
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Feat Show - 查看功能详情
 
-> 共享工具: `<skill-path>/references/feat-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/feat-utils.md`
 
 ## 执行流程
 

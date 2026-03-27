@@ -6,14 +6,13 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 # Feat Update - 需求变更管理
 
-> 共享工具: `<skill-path>/references/feat-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/feat-utils.md`
 
 ## 使用方式
 
 ```bash
-/fe-dev:feat:update 未分配角色的用户，默认无任何权限   # 直接带参数
-/fe-dev:feat:update                                     # 交互式
+/fe-dev:feat-update 未分配角色的用户，默认无任何权限   # 直接带参数
+/fe-dev:feat-update                                     # 交互式
 ```
 
 ## 执行流程

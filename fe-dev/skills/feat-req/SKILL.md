@@ -6,16 +6,17 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 # Feat Req - 需求文档管理
 
-> 共享工具: `<skill-path>/references/feat-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/feat-utils.md`
 
-## 前置步骤：获取当前 feat 名称
+## 前置步骤：获取当前 feat 名称 + 更新状态
 
 ```bash
 git branch --show-current   # 输出如 feat/login-page
 ```
 
 不以 `feat/` 开头则提示用户切换到功能分支。
+
+将 `index.md` 状态更新为 `📝 需求采集中`（当前为 `📋 已创建` 时）。
 
 ## `/fe-dev:feat-req` - 查看需求链接
 

@@ -10,7 +10,7 @@
 | 创建人 | {author} |
 | 源分支 | {baseBranch} |
 | 功能分支 | feat/{branchName} |
-| 状态 | 🚧 开发中 |
+| 状态 | 📋 已创建 |
 
 ## 需求来源
 

@@ -9,7 +9,7 @@
     {
       "name": "fe-dev",
       "description": "Frontend development assistant for project initialization and feature workflow management",
-      "version": "2.0.0",
+      "version": "3.2.0",
       "source": "./fe-dev",
       "author": {
         "name": "twoer",

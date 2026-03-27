@@ -8,7 +8,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 配置 MasterGo Personal Access Token，供 ui-add、ui-gen、ui-update 调用 DSL API。
 
-> **语言要求**：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/ui-utils.md`
 
 ## 执行流程
 

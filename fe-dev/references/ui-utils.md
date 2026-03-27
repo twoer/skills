@@ -1,7 +1,5 @@
 # UI Skill 共享约定
 
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
-
 ## 分支检查
 
 所有 UI skill 执行前必须检查当前分支：
@@ -33,7 +31,7 @@ type PageStatus = "draft" | "done"
 ## ui-pages.json
 
 - 不存在时从 `<skill-path>/templates/ui-pages.json` 创建
-- 条目格式：`{ id, name, mastergo, target, status, createdAt, updatedAt }`
+- 条目格式：`{ id, name, mastergo, target, tokens, status, createdAt, updatedAt }`
 
 ## MasterGo API
 
@@ -78,8 +76,9 @@ curl -s -o {output_path} \
 
 1. Element Plus 组件
 2. Tailwind CSS class（**必须写在 `<template>` class 属性上**）
-3. Scoped SCSS（仅 `:deep()` 和装饰性样式）
-4. 禁止：内联 style、全局 SCSS、!important、`<style>` 中裸写 Tailwind
+3. Tailwind `@apply`（仅在 `<style scoped>` 中用于 hover/focus 等状态组合，禁止用于普通样式）
+4. Scoped SCSS（仅 `:deep()` 和装饰性样式）
+5. 禁止：内联 style、全局 SCSS、!important、`<style>` 中裸写 Tailwind class
 
 ### EP 组件默认属性
 

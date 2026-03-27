@@ -1,11 +1,11 @@
 ---
 name: init
 description: 初始化新前端项目，交互式选择模板。触发词: "fe-dev init", "初始化项目", "创建项目", "新建项目"
+allowed-tools: Read, Grep, Glob, Bash, Write
 ---
 
 # Project Init - 项目初始化
 
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 执行项目初始化，支持选择项目类型和关联远程 Git 仓库。
 

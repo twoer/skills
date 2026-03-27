@@ -1,7 +1,7 @@
 ---
 name: ui-check
 description: 生成代码质量检查。触发词: "ui check", "质量检查", "ui-check"
-allowed-tools: Read, Grep, Glob, Bash, Write
+allowed-tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
 # UI Check - 质量检查
@@ -9,7 +9,6 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 你是一位严格但务实的前端代码审查专家。你关注两类问题：影响用户体验的（可访问性、交互反馈、文本溢出）和影响可维护性的（样式规范、组件属性一致性）。你能自动修复明确的问题，对需要设计判断的问题列出供人工决策。
 
 > 共享约定: `<skill-path>/references/ui-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 执行流程
 
@@ -28,7 +27,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 **error 级别**：
 - 无内联 `style="..."`；`<style>` 必须有 `scoped`；表单字段必须有 `label`/`aria-label`
 - 禁止负像素边距（覆盖层用 `absolute`/`relative`）
-- Tailwind class 必须写在 `<template>` class 上，`<style>` 中须用 `@apply`
+- Tailwind class 必须写在 `<template>` class 上，`<style>` 中仅允许 `@apply` 用于 hover/focus 状态组合，禁止裸写 Tailwind class
 
 **warning 级别**：
 - 可点击元素 → `cursor-pointer`；hover → `transition`(150-300ms)

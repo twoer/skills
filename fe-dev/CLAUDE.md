@@ -7,13 +7,19 @@
 - **项目初始化**: `/fe-dev:init`、`/fe-dev:claude-init`
 - **Feature 工作流**: `/fe-dev:feat-new` → `feat-req` → `feat-gen` → `feat-exec` → `feat-done` → `feat-archive`
 - **UI 设计稿**: `/fe-dev:ui-setup` → `ui-add` → `ui-gen` → `ui-check`
-- **Spec 规范**: `/fe-dev:spec api-sync`、`spec req-gen`、`spec req-exec`
+  - 查看: `/fe-dev:ui`
+  - 更新: `/fe-dev:ui-update`
+- **Spec 规范**: `/fe-dev:spec-api-sync`、`spec-req-gen`、`spec-req-exec`
 
 完整命令列表见 `/fe-dev:index` 或 README.md。
 
 ## 技术栈
 
 Nuxt 4 + Vue 3 + TypeScript + Element Plus + Tailwind CSS + Scoped SCSS + Pinia
+
+## 语言要求
+
+所有输出统一使用中文，代码和文件路径保持英文。
 
 ## 关键约定
 
@@ -32,8 +38,9 @@ Nuxt 4 + Vue 3 + TypeScript + Element Plus + Tailwind CSS + Scoped SCSS + Pinia
 
 1. Element Plus 组件
 2. Tailwind CSS class（必须写在 `<template>` class 属性上）
-3. Scoped SCSS（仅 `:deep()` 和装饰性样式）
-4. 禁止：内联 style、全局 SCSS、!important
+3. Tailwind `@apply`（仅 `<style scoped>` 中用于 hover/focus 状态组合）
+4. Scoped SCSS（仅 `:deep()` 和装饰性样式）
+5. 禁止：内联 style、全局 SCSS、!important、`<style>` 中裸写 Tailwind class
 
 ## 共享文件
 

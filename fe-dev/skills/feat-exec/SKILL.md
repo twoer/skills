@@ -6,8 +6,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 # Feat Exec - 执行开发任务
 
-> 共享工具: `<skill-path>/references/feat-utils.md`
-> 语言要求：所有输出统一使用中文，代码和文件路径保持英文。
+> 共享约定: `<skill-path>/references/feat-utils.md`
 
 ## 执行流程
 
@@ -15,9 +14,11 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 未指定 name 则从 `git branch --show-current` 获取。
 
-### 步骤 2: 检查 plan.md
+### 步骤 2: 检查 plan.md + 更新状态
 
 路径：`docs/features/feat-{name}/dev/plan.md`。不存在则提示先运行 `/fe-dev:feat-gen`。
+
+将 `index.md` 状态更新为 `🚧 开发中`（当前为 `📐 计划生成中` 时）。
 
 ### 步骤 3: 解析任务列表
 
