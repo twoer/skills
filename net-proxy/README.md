@@ -19,6 +19,12 @@
 
 配置完成后，所有 npm/pnpm install 命令会自动携带代理，无需手动操作。
 
+## 更新
+
+```bash
+/plugin update net-proxy
+```
+
 ## 命令
 
 ### `/net-proxy:setup`

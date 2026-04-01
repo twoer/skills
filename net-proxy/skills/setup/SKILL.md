@@ -17,22 +17,24 @@ allowed-tools:
 
 ## 执行流程
 
-### 1. 检测代理
+### 1. 定位脚本路径
 
 ```bash
-bash "$(dirname "$0")/../../scripts/detect-proxy.sh"
+SCRIPTS_DIR=$(find ~/.claude/plugins/cache -path "*/net-proxy/scripts/detect-proxy.sh" 2>/dev/null | head -1 | xargs dirname)
 ```
 
-如果脚本路径无法解析，使用绝对路径：
+如果 `SCRIPTS_DIR` 为空（插件缓存位置不同），提示用户手动指定路径。
+
+### 2. 检测代理
 
 ```bash
-bash "<plugin-install-dir>/net-proxy/scripts/detect-proxy.sh"
+bash "$SCRIPTS_DIR/detect-proxy.sh"
 ```
 
 - 检测到代理 → 展示代理地址，继续
 - 未检测到代理 → 提示「未检测到系统代理，请先配置代理后重试」，退出
 
-### 2. 检查 Hook 是否已存在
+### 3. 检查 Hook 是否已存在
 
 读取 `~/.claude/settings.json`，检查 `hooks.PreToolUse` 中是否已有 command 包含 `pre-bash-proxy.sh` 的条目。
 
@@ -41,7 +43,7 @@ bash "<plugin-install-dir>/net-proxy/scripts/detect-proxy.sh"
 
 如果文件不存在或没有 `hooks` 字段，视为不存在，继续。
 
-### 3. 写入 Hook 配置
+### 4. 写入 Hook 配置
 
 读取现有 `~/.claude/settings.json`，**合并**（不覆盖）以下内容：
 
@@ -64,13 +66,10 @@ bash "<plugin-install-dir>/net-proxy/scripts/detect-proxy.sh"
 }
 ```
 
-其中 `<absolute-path-to-pre-bash-proxy.sh>` 需要替换为实际绝对路径。
-
-路径获取方式：
+其中 `<absolute-path-to-pre-bash-proxy.sh>` 替换为步骤 1 中定位到的路径：
 
 ```bash
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-HOOK_PATH=$(realpath "$SCRIPT_DIR/../../scripts/pre-bash-proxy.sh")
+HOOK_PATH=$(realpath "$SCRIPTS_DIR/pre-bash-proxy.sh")
 echo "$HOOK_PATH"
 ```
 
@@ -80,7 +79,7 @@ echo "$HOOK_PATH"
 - 保留所有已有的 hooks 和其他 settings
 - 如果 `hooks` 或 `hooks.PreToolUse` 不存在，创建它们
 
-### 4. 验证
+### 5. 验证
 
 ```bash
 jq -e '.hooks.PreToolUse[] | select(.matcher == "Bash") | .hooks[] | select(.type == "command") | .command' ~/.claude/settings.json
@@ -88,7 +87,7 @@ jq -e '.hooks.PreToolUse[] | select(.matcher == "Bash") | .hooks[] | select(.typ
 
 输出刚写入的 command 且 exit 0 = 成功。
 
-### 5. 提示用户
+### 6. 提示用户
 
 输出：
 

@@ -6,6 +6,7 @@ allowed-tools:
   - Bash(networksetup *)
   - Bash(curl *)
   - Bash(jq *)
+  - Bash(find *)
 ---
 
 # Proxy
@@ -26,17 +27,25 @@ allowed-tools:
 ## 参数解析
 
 - 参数为空或不含 `test` → 显示代理状态
-- 参数包含 `test` → 测试连通性
+- 参数包含 `test` → 显示代理状态 + 测试连通性
 
 ## 执行流程
 
-### 1. 检测代理
+### 1. 定位脚本路径
 
 ```bash
-bash "<scripts-dir>/detect-proxy.sh"
+SCRIPTS_DIR=$(find ~/.claude/plugins/cache -path "*/net-proxy/scripts/detect-proxy.sh" 2>/dev/null | head -1 | xargs dirname)
 ```
 
-### 2. 检测各来源状态
+如果 `SCRIPTS_DIR` 为空，提示用户手动指定路径。
+
+### 2. 检测代理
+
+```bash
+bash "$SCRIPTS_DIR/detect-proxy.sh"
+```
+
+### 3. 检测各来源状态
 
 逐项检查并输出报告：
 
@@ -77,11 +86,11 @@ if command -v networksetup &>/dev/null; then
 fi
 ```
 
-### 3. 连通性测试（仅 `test` 参数）
+### 4. 连通性测试（仅 `test` 参数）
 
 如果参数包含 `test`：
 
-1. 先检测代理（步骤 1）
+1. 先检测代理（步骤 2）
 2. 如果检测到代理：
 
 ```bash

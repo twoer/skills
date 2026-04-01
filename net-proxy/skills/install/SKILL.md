@@ -6,6 +6,7 @@ allowed-tools:
   - Bash(pnpm *)
   - Bash(yarn *)
   - Bash(bash *)
+  - Bash(find *)
   - Bash(ls *)
 ---
 
@@ -31,16 +32,24 @@ allowed-tools:
 
 ## 执行流程
 
-### 1. 检测代理
+### 1. 定位脚本路径
 
 ```bash
-bash "<scripts-dir>/detect-proxy.sh"
+SCRIPTS_DIR=$(find ~/.claude/plugins/cache -path "*/net-proxy/scripts/detect-proxy.sh" 2>/dev/null | head -1 | xargs dirname)
+```
+
+如果 `SCRIPTS_DIR` 为空，提示用户手动指定路径。
+
+### 2. 检测代理
+
+```bash
+PROXY=$(bash "$SCRIPTS_DIR/detect-proxy.sh")
 ```
 
 - 检测到代理 → 继续
 - 未检测到代理 → 提示「未检测到系统代理。请先配置代理后重试，或使用 /net-proxy:proxy 查看状态」，退出
 
-### 2. 检测包管理器
+### 3. 检测包管理器
 
 通过 lock 文件判断：
 
@@ -54,20 +63,20 @@ else
 fi
 ```
 
-### 3. 执行安装
+### 4. 执行安装
 
 ```bash
-HTTP_PROXY=<proxy> HTTPS_PROXY=<proxy> <pkg-manager> install <args>
+HTTP_PROXY=$PROXY HTTPS_PROXY=$PROXY $PKG_MANAGER install <args>
 ```
 
 根据包管理器不同：
-- npm: `HTTP_PROXY=<proxy> HTTPS_PROXY=<proxy> npm install <args>`
-- pnpm: `HTTP_PROXY=<proxy> HTTPS_PROXY=<proxy> pnpm install <args>`
-- yarn: `HTTP_PROXY=<proxy> HTTPS_PROXY=<proxy> yarn install <args>`
+- npm: `HTTP_PROXY=$PROXY HTTPS_PROXY=$PROXY npm install <args>`
+- pnpm: `HTTP_PROXY=$PROXY HTTPS_PROXY=$PROXY pnpm install <args>`
+- yarn: `HTTP_PROXY=$PROXY HTTPS_PROXY=$PROXY yarn install <args>`
 
 如果用户提供了 args，追加到命令末尾。
 
-### 4. 错误处理
+### 5. 错误处理
 
 | 错误场景 | 处理方式 |
 |----------|----------|
