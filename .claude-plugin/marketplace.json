@@ -25,6 +25,16 @@
         "name": "twoer",
         "email": "zhangkun_net@hotmail.com"
       }
+    },
+    {
+      "name": "net-proxy",
+      "description": "自动检测系统代理并注入 npm/pnpm install 命令",
+      "version": "1.0.0",
+      "source": "./net-proxy",
+      "author": {
+        "name": "twoer",
+        "email": "zhangkun_net@hotmail.com"
+      }
     }
   ]
 }
