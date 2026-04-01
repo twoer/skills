@@ -29,7 +29,7 @@
     {
       "name": "net-proxy",
       "description": "自动检测系统代理并注入 npm/pnpm install 命令",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./net-proxy",
       "author": {
         "name": "twoer",

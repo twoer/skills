@@ -33,11 +33,19 @@ allowed-tools:
 
 ### 1. 定位脚本路径
 
+依次尝试以下路径，找到即停止：
+
 ```bash
-SCRIPTS_DIR=$(find ~/.claude/plugins/cache -path "*/net-proxy/scripts/detect-proxy.sh" 2>/dev/null | head -1 | xargs dirname)
+# 优先从 marketplaces 目录查找
+SCRIPTS_DIR=$(find ~/.claude/plugins/marketplaces -path "*/net-proxy/scripts/detect-proxy.sh" 2>/dev/null | head -1 | xargs dirname)
+
+# 备选：从 cache 目录查找
+if [ -z "$SCRIPTS_DIR" ]; then
+  SCRIPTS_DIR=$(find ~/.claude/plugins/cache -path "*/net-proxy/scripts/detect-proxy.sh" 2>/dev/null | head -1 | xargs dirname)
+fi
 ```
 
-如果 `SCRIPTS_DIR` 为空，提示用户手动指定路径。
+如果 `SCRIPTS_DIR` 仍为空，提示用户手动指定路径。
 
 ### 2. 检测代理
 
@@ -46,6 +54,8 @@ bash "$SCRIPTS_DIR/detect-proxy.sh"
 ```
 
 ### 3. 检测各来源状态
+
+**注意：步骤 3 中的命令必须顺序执行，不要并行调用，避免某个命令失败导致其他命令被取消。**
 
 逐项检查并输出报告：
 
@@ -69,20 +79,22 @@ bash "$SCRIPTS_DIR/detect-proxy.sh"
 - 来源: <环境变量/macOS系统代理>
 ```
 
-环境变量检测：
+环境变量检测（注意：逐个检查，避免 `${!var}` 等 bash 间接展开语法，因为用户 shell 可能是 zsh）：
 
 ```bash
-for var in HTTPS_PROXY HTTP_PROXY ALL_PROXY https_proxy http_proxy all_proxy; do
-  echo "$var: ${!var:-未设置}"
-done
+echo "HTTPS_PROXY: ${HTTPS_PROXY:-未设置}" && \
+echo "HTTP_PROXY: ${HTTP_PROXY:-未设置}" && \
+echo "ALL_PROXY: ${ALL_PROXY:-未设置}" && \
+echo "https_proxy: ${https_proxy:-未设置}" && \
+echo "http_proxy: ${http_proxy:-未设置}" && \
+echo "all_proxy: ${all_proxy:-未设置}"
 ```
 
-macOS 系统代理检测（仅在 macOS 上执行）：
+macOS 系统代理检测（仅在 macOS 上执行，与上面环境变量检测顺序执行，不要并行）：
 
 ```bash
 if command -v networksetup &>/dev/null; then
-  networksetup -getsecurewebproxy Wi-Fi
-  networksetup -getwebproxy Wi-Fi
+  echo "=== Wi-Fi HTTPS ===" && networksetup -getsecurewebproxy Wi-Fi && echo "" && echo "=== Wi-Fi HTTP ===" && networksetup -getwebproxy Wi-Fi
 fi
 ```
 
