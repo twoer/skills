@@ -106,6 +106,25 @@ Info (1):
   - 建议使用 ElPagination 替代手动分页实现
 ```
 
+### 步骤 4.5: 未使用 SVG 清理
+
+扫描 SVG 导出目录（`app/assets/icons/svgs/{分类}/`），对每个 `.svg` 文件检查是否在目标 `.vue` 文件中被引用（组件标签或 `resolveComponent` 调用）：
+
+```bash
+# 文件名 kebab-case → 组件名 PascalCase 的映射规则：
+# {分类}/refund-stat-icon.svg → I{分类}RefundStatIcon
+```
+
+- 未被引用的 SVG → 列出并删除
+- 输出清理结果：
+  ```
+  SVG 清理: 删除 {n} 个未使用文件
+    ✗ arrow-down.svg — EP 内置箭头，无需导出
+    ✗ calendar.svg — EP DatePicker 内置
+    ✗ dcaret.svg — EP Table 排序内置
+    保留 {m} 个已引用文件
+  ```
+
 ### 步骤 5: 自动修复
 
 **可自动修复**（仅限 DSL 或规则可确定的修复，禁止猜测样式）：
