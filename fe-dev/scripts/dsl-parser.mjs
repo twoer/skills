@@ -7,6 +7,8 @@
  *   node dsl-parser.mjs tokens <dsl_raw.json> [output.json]      — 提取 design tokens（含 rgba/渐变/textSegments）
  *   node dsl-parser.mjs tailwind-map <tailwind.config.*> [output.json] — 生成 Tailwind 值→class 映射表
  *   node dsl-parser.mjs export-svgs <resources.json> <output-dir>     — 批量导出 SVG 文件到目录
+ *   node dsl-parser.mjs fetch-svgs <resources.json> <output-dir> --pat <pat> --base-url <url> --file-id <id>
+ *                                                                     — 逐节点请求 DSL 后精确重建 SVG
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
@@ -14,7 +16,7 @@ import { dirname, resolve as pathResolve, extname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { execSync } from 'node:child_process'
 
-const VERSION = '6.1.0'
+const VERSION = '6.3.0'
 
 // SVG 相关节点类型
 const SVG_SHAPE_TYPES = new Set(['PATH', 'SVG_ELLIPSE', 'SVG_RECT', 'SVG_POLYGON', 'SVG_LINE'])
@@ -51,10 +53,12 @@ function resolveStyleRef(dsl, refKey) {
   return { token: refKey, value: null }
 }
 
-/** 检查节点是否可见（visible: false 或 opacity: 0 的节点跳过） */
+/** 检查节点是否可见（visible: false、opacity: 0、尺寸接近 0 的节点跳过） */
 function isNodeVisible(node) {
   if (node.visible === false) return false
   if (node.opacity === 0) return false
+  const layout = node.layoutStyle || {}
+  if (layout.width != null && layout.height != null && layout.width < 1 && layout.height < 1) return false
   return true
 }
 
@@ -78,7 +82,16 @@ function normalizeColor(color) {
 }
 
 function resolveFillColor(dsl, node) {
-  const fill = node.fill
+  let fill = node.fill
+  // MasterGo PATH 节点的 fill 存在 path[0].fill 而非 node.fill
+  if (!fill && node.type === 'PATH') {
+    const pathField = node.path
+    if (Array.isArray(pathField) && pathField.length > 0 && pathField[0].fill) {
+      fill = pathField[0].fill
+    } else if (typeof pathField === 'object' && pathField !== null && !Array.isArray(pathField) && pathField.fill) {
+      fill = pathField.fill
+    }
+  }
   if (!fill) return null
 
   if (typeof fill === 'string' && fill.startsWith('#')) {
@@ -124,6 +137,18 @@ function resolveFillColor(dsl, node) {
 /** 解析节点的 stroke 信息 */
 function resolveStroke(dsl, node) {
   const stroke = node.stroke
+  // MasterGo DSL 也可能用 strokeColor + strokeWidth 分开存储
+  if (!stroke && node.strokeColor) {
+    const colorRef = node.strokeColor
+    let color = colorRef
+    if (typeof colorRef === 'string' && (colorRef.startsWith('paint_') || colorRef.startsWith('effect_'))) {
+      const resolved = resolveStyleRef(dsl, colorRef)
+      color = (resolved.value && typeof resolved.value === 'string') ? resolved.value : colorRef
+    }
+    const widthStr = node.strokeWidth
+    const width = widthStr ? parseFloat(String(widthStr).replace('px', '')) : null
+    return { color, width, lineCap: node.strokeLineCap || null, lineJoin: node.strokeLineJoin || null, dasharray: null }
+  }
   if (!stroke) return null
   if (typeof stroke === 'string' && stroke.startsWith('#')) {
     return { color: stroke }
@@ -207,12 +232,40 @@ function getSemanticName(node, parentName = '') {
   return pascal
 }
 
+/** 判断是否为 SVG 子树（含 FRAME/LAYER 包裹的纯 SVG 形状组） */
 function isSvgSubtree(node) {
   const nodeType = node.type || ''
   if (SVG_GROUP_TYPES.has(nodeType)) return true
   const children = node.children || []
   if (children.length === 0) return false
-  return children.every((child) => SVG_ALL_TYPES.has(child.type || ''))
+
+  // FRAME/LAYER 容器：如果尺寸远大于子节点，说明是布局容器而非 SVG 图标
+  // 例如 icon-wrapper-16px (40x64) 包含 16x16 的实际图标
+  if ((nodeType === 'FRAME' || nodeType === 'LAYER') && children.length === 1) {
+    const parentW = node.layoutStyle?.width || 0
+    const parentH = node.layoutStyle?.height || 0
+    const childW = children[0].layoutStyle?.width || 0
+    const childH = children[0].layoutStyle?.height || 0
+    if (parentW > 0 && childW > 0 && parentH > 0 && childH > 0) {
+      const areaRatio = (parentW * parentH) / (childW * childH)
+      // 容器面积超过子节点 4 倍 → 是布局容器，递归处理子节点
+      if (areaRatio > 4) return false
+    }
+  }
+
+  // 子节点全是 SVG 形状类型 → 是 SVG 子树
+  if (children.every((child) => SVG_ALL_TYPES.has(child.type || ''))) return true
+  // 子节点全是 SVG 形状 + PATH + LAYER（纯色矩形底色）→ 也是 SVG 子树（图标组合）
+  const svgLikeTypes = new Set([...SVG_ALL_TYPES, 'LAYER'])
+  return children.every((child) => {
+    const ct = child.type || ''
+    if (svgLikeTypes.has(ct)) return true
+    // FRAME 子节点如果其子节点全是 SVG 形状，也算
+    if (ct === 'FRAME' && (child.children || []).length > 0) {
+      return (child.children || []).every(gc => SVG_ALL_TYPES.has(gc.type || '') || gc.type === 'LAYER')
+    }
+    return false
+  })
 }
 
 // ─── SVG 子形状收集 ──────────────────────────────────────────────
@@ -253,6 +306,13 @@ function collectSvgChildren(dsl, node, parentType = '') {
     return shapes // 不再递归，子 path 已合并
   }
 
+  // 提取节点在父容器中的相对位置（用于 SVG 组内子形状定位）
+  const layout = node.layoutStyle || {}
+  const relPos = {
+    x: Math.round((layout.relativeX ?? 0) * 10) / 10,
+    y: Math.round((layout.relativeY ?? 0) * 10) / 10,
+  }
+
   if (nodeType === 'PATH') {
     const pathField = node.path || {}
     let pathData = ''
@@ -264,7 +324,7 @@ function collectSvgChildren(dsl, node, parentType = '') {
     const fillInfo = resolveFillColor(dsl, node)
     const strokeInfo = resolveStroke(dsl, node)
     if (pathData || fillInfo || strokeInfo) {
-      shapes.push({ shape: 'path', path_data: pathData, fill: fillInfo, stroke: strokeInfo, bounds: getNodeBounds(node) })
+      shapes.push({ shape: 'path', path_data: pathData, fill: fillInfo, stroke: strokeInfo, bounds: getNodeBounds(node), relPos })
     }
   } else if (nodeType === 'SVG_POLYGON') {
     // 提取 polygon 的 points 数据
@@ -293,7 +353,20 @@ function collectSvgChildren(dsl, node, parentType = '') {
       fill: resolveFillColor(dsl, node),
       stroke: resolveStroke(dsl, node),
       bounds: getNodeBounds(node),
+      relPos,
     })
+  } else if (nodeType === 'LAYER') {
+    // LAYER 作为 SVG 子形状时当作矩形处理（图标中的纯色底色块）
+    const fillInfo = resolveFillColor(dsl, node)
+    if (fillInfo && fillInfo.type !== 'image') {
+      shapes.push({
+        shape: 'rect',
+        fill: fillInfo,
+        stroke: resolveStroke(dsl, node),
+        bounds: getNodeBounds(node),
+        relPos,
+      })
+    }
   } else if (['SVG_ELLIPSE', 'SVG_RECT', 'SVG_LINE'].includes(nodeType)) {
     const shapeMap = { SVG_ELLIPSE: 'ellipse', SVG_RECT: 'rect', SVG_LINE: 'line' }
     shapes.push({
@@ -301,6 +374,7 @@ function collectSvgChildren(dsl, node, parentType = '') {
       fill: resolveFillColor(dsl, node),
       stroke: resolveStroke(dsl, node),
       bounds: getNodeBounds(node),
+      relPos,
     })
   }
 
@@ -510,11 +584,27 @@ function deduplicateResources(resources) {
 
 /** 从 MasterGo font style 字符串中提取 fontWeight */
 function extractFontWeight(styleStr) {
+  if (!styleStr) return null
+  // 简单字符串：直接是字重名如 "Regular"、"Medium"、"Bold"
+  if (typeof styleStr === 'string' && !styleStr.startsWith('{')) {
+    const simpleMap = {
+      'Thin': 'w100', 'ExtraLight': 'w200', 'Light': 'w300',
+      'Regular': 'w400', 'Medium': 'w500', 'SemiBold': 'w600', 'Bold': 'w700',
+      'ExtraBold': 'w800', 'Black': 'w900',
+    }
+    return simpleMap[styleStr] || null
+  }
   try {
     const obj = typeof styleStr === 'string' ? JSON.parse(styleStr) : styleStr
     if (obj.wght) return `w${obj.wght}`
     const name = obj.fontStyle || ''
-    const weightMap = { '极细体': 'w100', '细体': 'w300', '常规体': 'w400', '中粗体': 'w600', '粗体': 'w700', '特粗体': 'w800' }
+    const weightMap = {
+      '极细体': 'w100', '细体': 'w300', '常规体': 'w400', '中黑体': 'w500',
+      '中粗体': 'w600', '粗体': 'w700', '特粗体': 'w800',
+      'Thin': 'w100', 'ExtraLight': 'w200', 'Light': 'w300',
+      'Regular': 'w400', 'Medium': 'w500', 'SemiBold': 'w600', 'Bold': 'w700',
+      'ExtraBold': 'w800', 'Black': 'w900',
+    }
     return weightMap[name] || null
   } catch { return null }
 }
@@ -663,30 +753,42 @@ function extractTokens(dsl, node, tokens) {
     }
   }
 
-  // 间距
-  for (const key of ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft']) {
-    const val = layout[key]
-    if (val != null && val !== 0) tokens.spacings.add(val)
+  // 间距（统一转为数字，过滤不合理值）
+  function addSpacing(val) {
+    if (val == null) return
+    if (typeof val === 'number') {
+      if (val > 0 && val <= 200) tokens.spacings.add(val)
+      return
+    }
+    if (typeof val === 'string') {
+      // "16px 16px" → 拆分为两个值
+      for (const part of val.split(/\s+/)) {
+        const num = parseFloat(part)
+        if (!isNaN(num) && num > 0 && num <= 200) tokens.spacings.add(num)
+      }
+    }
   }
-  if (layout.padding != null && layout.padding !== 0) tokens.spacings.add(layout.padding)
-  if (layout.margin != null && layout.margin !== 0) tokens.spacings.add(layout.margin)
-  if (flex.gap != null && flex.gap !== 0) tokens.spacings.add(flex.gap)
-  if (flex.rowGap != null && flex.rowGap !== 0) tokens.spacings.add(flex.rowGap)
-  if (flex.columnGap != null && flex.columnGap !== 0) tokens.spacings.add(flex.columnGap)
+  for (const key of ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft']) {
+    addSpacing(layout[key])
+  }
+  addSpacing(layout.padding)
+  addSpacing(layout.margin)
+  addSpacing(flex.gap)
+  addSpacing(flex.rowGap)
+  addSpacing(flex.columnGap)
 
-  // 圆角（支持四角不同值 + 字符串 "24px"）
+  // 圆角（支持四角不同值 + 字符串 "24px"，超大值映射为 9999）
+  function addRadius(val) {
+    const num = typeof val === 'number' ? val : parseFloat(val)
+    if (isNaN(num) || num <= 0) return
+    tokens.radii.add(num > 1000 ? 9999 : num)
+  }
   const radius = node.borderRadius
   if (radius != null) {
-    if (typeof radius === 'number' && radius > 0) {
-      tokens.radii.add(radius)
-    } else if (typeof radius === 'string') {
-      const num = parseFloat(radius)
-      if (!isNaN(num) && num > 0) tokens.radii.add(num)
-    } else if (typeof radius === 'object') {
-      for (const v of Object.values(radius)) {
-        const num = typeof v === 'number' ? v : parseFloat(v)
-        if (!isNaN(num) && num > 0) tokens.radii.add(num)
-      }
+    if (typeof radius === 'object' && !Array.isArray(radius)) {
+      for (const v of Object.values(radius)) addRadius(v)
+    } else {
+      addRadius(radius)
     }
   }
 
@@ -797,7 +899,7 @@ function buildSvgMarkup(resource) {
   if (resource.path_data) {
     const fill = resolveSvgFill(resource.fill)
     const strokeAttrs = buildStrokeAttrs(resource.stroke)
-    const fillRuleAttr = resource.fillRule ? ` fill-rule="${resource.fillRule}"` : ''
+    const fillRuleAttr = ` fill-rule="${resource.fillRule || 'evenodd'}"`
     const bbox = pathDataBBox(resource.path_data)
     if (bbox) {
       const pad = 0.5
@@ -826,34 +928,47 @@ function buildSvgMarkup(resource) {
     const shapes = resource.children.map(child => {
       const fill = resolveSvgFill(child.fill)
       const strokeAttrs = buildStrokeAttrs(child.stroke)
-      // 计算子元素相对于父 SVG 的偏移
-      const relX = child.bounds ? Math.round((child.bounds.x - parentX) * 10) / 10 : 0
-      const relY = child.bounds ? Math.round((child.bounds.y - parentY) * 10) / 10 : 0
+      // 使用 relPos（节点在父容器中的 relativeX/relativeY），而非绝对坐标差
+      const relX = child.relPos ? child.relPos.x : (child.bounds ? Math.round((child.bounds.x - parentX) * 10) / 10 : 0)
+      const relY = child.relPos ? child.relPos.y : (child.bounds ? Math.round((child.bounds.y - parentY) * 10) / 10 : 0)
 
       if (child.shape === 'path' && child.path_data) {
-        const fillRuleAttr = child.fillRule ? ` fill-rule="${child.fillRule}"` : ''
+        const fillRuleAttr = ` fill-rule="${child.fillRule || 'evenodd'}"`
+        // path 坐标是子节点自身的局部坐标系，需要 translate 到父 SVG 中的正确位置
+        const needTranslate = relX !== 0 || relY !== 0
+        if (needTranslate) {
+          return `  <g transform="translate(${relX}, ${relY})"><path d="${child.path_data}" fill="${fill}"${fillRuleAttr}${strokeAttrs}/></g>`
+        }
         return `  <path d="${child.path_data}" fill="${fill}"${fillRuleAttr}${strokeAttrs}/>`
       }
       if (child.shape === 'polygon' && child.points) {
-        if (child.points.trim().startsWith('M') || child.points.trim().startsWith('m')) {
-          return `  <path d="${child.points}" fill="${fill}"${strokeAttrs}/>`
+        const needTranslate = relX !== 0 || relY !== 0
+        const inner = child.points.trim().startsWith('M') || child.points.trim().startsWith('m')
+          ? `<path d="${child.points}" fill="${fill}"${strokeAttrs}/>`
+          : `<polygon points="${child.points}" fill="${fill}"${strokeAttrs}/>`
+        if (needTranslate) {
+          return `  <g transform="translate(${relX}, ${relY})">${inner}</g>`
         }
-        return `  <polygon points="${child.points}" fill="${fill}"${strokeAttrs}/>`
+        return `  ${inner}`
       }
-      if (child.shape === 'ellipse' && child.bounds) {
-        const rx = Math.round(child.bounds.width / 2)
-        const ry = Math.round(child.bounds.height / 2)
+      if (child.shape === 'ellipse' && (child.bounds || child.relPos)) {
+        const bw = child.bounds ? child.bounds.width : 0
+        const bh = child.bounds ? child.bounds.height : 0
+        const rx = Math.round(bw / 2)
+        const ry = Math.round(bh / 2)
         const cx = Math.round(relX + rx)
         const cy = Math.round(relY + ry)
         return `  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}"${strokeAttrs}/>`
       }
-      if (child.shape === 'rect' && child.bounds) {
-        const w = Math.round(child.bounds.width)
-        const h = Math.round(child.bounds.height)
+      if (child.shape === 'rect' && (child.bounds || child.relPos)) {
+        const w = child.bounds ? Math.round(child.bounds.width) : 0
+        const h = child.bounds ? Math.round(child.bounds.height) : 0
         return `  <rect x="${relX}" y="${relY}" width="${w}" height="${h}" fill="${fill}"${strokeAttrs}/>`
       }
-      if (child.shape === 'line' && child.bounds) {
-        return `  <line x1="${relX}" y1="${relY}" x2="${Math.round(relX + child.bounds.width)}" y2="${Math.round(relY + child.bounds.height)}" stroke="${child.stroke?.color || fill}" stroke-width="${child.stroke?.width || 1}"${strokeAttrs}/>`
+      if (child.shape === 'line' && (child.bounds || child.relPos)) {
+        const bw = child.bounds ? child.bounds.width : 0
+        const bh = child.bounds ? child.bounds.height : 0
+        return `  <line x1="${relX}" y1="${relY}" x2="${Math.round(relX + bw)}" y2="${Math.round(relY + bh)}" stroke="${child.stroke?.color || fill}" stroke-width="${child.stroke?.width || 1}"${strokeAttrs}/>`
       }
       return ''
     }).filter(Boolean).join('\n')
@@ -1190,6 +1305,153 @@ function writeOutput(result, outputPath, label) {
   }
 }
 
+// ─── Fetch SVGs via per-node DSL API ──────────────────────────────
+
+async function fetchNodeDsl(baseUrl, fileId, nodeId, pat, noproxy) {
+  const url = `${baseUrl}/mcp/dsl?fileId=${encodeURIComponent(fileId)}&layerId=${encodeURIComponent(nodeId)}`
+  let cmd = `curl -s --max-time 15 -H "X-MG-UserAccessToken: ${pat}" -H "Content-Type: application/json" -H "Accept: application/json"`
+  if (noproxy) cmd += ` --noproxy '*'`
+  cmd += ` "${url}"`
+  try {
+    const result = execSync(cmd, { encoding: 'utf-8', timeout: 20000 })
+    return JSON.parse(result)
+  } catch {
+    return null
+  }
+}
+
+function buildSvgFromNodeDsl(dsl) {
+  if (!dsl || !dsl.nodes || dsl.nodes.length === 0) return null
+  let root = dsl.nodes[0]
+
+  // 向下钻取：如果根节点是"大容器包小图标"模式（如 56x56 包含 SVG_ELLIPSE 背景 + 36x36 图标），
+  // 则跳过背景层，只取实际图标子节点
+  const children = root.children || []
+  if (children.length === 2) {
+    const [a, b] = children
+    const aType = a.type || '', bType = b.type || ''
+    const rootW = root.layoutStyle?.width || 0
+    // 模式：一个大尺寸 SVG_ELLIPSE/LAYER + 一个小尺寸 FRAME → 取 FRAME 作为根
+    if ((aType === 'SVG_ELLIPSE' || aType === 'LAYER') && bType === 'FRAME') {
+      const bW = b.layoutStyle?.width || 0
+      if (bW > 0 && bW < rootW * 0.8) root = b
+    } else if (aType === 'FRAME' && (bType === 'SVG_ELLIPSE' || bType === 'LAYER')) {
+      const aW = a.layoutStyle?.width || 0
+      if (aW > 0 && aW < rootW * 0.8) root = a
+    }
+  }
+
+  const w = Math.round(root.layoutStyle?.width || 24)
+  const h = Math.round(root.layoutStyle?.height || 24)
+
+  // Collect all SVG shapes from this clean sub-tree
+  const shapes = collectSvgChildren(dsl, root)
+  if (shapes.length === 0) return null
+
+  const parts = shapes.map(child => {
+    const fill = resolveSvgFill(child.fill)
+    const strokeAttrs = buildStrokeAttrs(child.stroke)
+    const relX = child.relPos ? child.relPos.x : 0
+    const relY = child.relPos ? child.relPos.y : 0
+
+    if (child.shape === 'path' && child.path_data) {
+      const fillRuleAttr = ` fill-rule="${child.fillRule || 'evenodd'}"`
+      const needTranslate = relX !== 0 || relY !== 0
+      if (needTranslate) {
+        return `  <g transform="translate(${relX}, ${relY})"><path d="${child.path_data}" fill="${fill}"${fillRuleAttr}${strokeAttrs}/></g>`
+      }
+      return `  <path d="${child.path_data}" fill="${fill}"${fillRuleAttr}${strokeAttrs}/>`
+    }
+    if (child.shape === 'ellipse') {
+      const bw = child.bounds ? child.bounds.width : 0
+      const bh = child.bounds ? child.bounds.height : 0
+      const rx = Math.round(bw / 2 * 10) / 10
+      const ry = Math.round(bh / 2 * 10) / 10
+      const cx = Math.round((relX + rx) * 10) / 10
+      const cy = Math.round((relY + ry) * 10) / 10
+      return `  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}"${strokeAttrs}/>`
+    }
+    if (child.shape === 'rect') {
+      const rw = child.bounds ? Math.round(child.bounds.width) : 0
+      const rh = child.bounds ? Math.round(child.bounds.height) : 0
+      // Skip near-transparent background rects
+      if (fill.includes('0.01') || fill === 'none') return ''
+      return `  <rect x="${relX}" y="${relY}" width="${rw}" height="${rh}" fill="${fill}"${strokeAttrs}/>`
+    }
+    if (child.shape === 'polygon' && child.points) {
+      const needTranslate = relX !== 0 || relY !== 0
+      const inner = child.points.trim().startsWith('M') || child.points.trim().startsWith('m')
+        ? `<path d="${child.points}" fill="${fill}" fill-rule="evenodd"${strokeAttrs}/>`
+        : `<polygon points="${child.points}" fill="${fill}"${strokeAttrs}/>`
+      if (needTranslate) return `  <g transform="translate(${relX}, ${relY})">${inner}</g>`
+      return `  ${inner}`
+    }
+    return ''
+  }).filter(Boolean)
+
+  if (parts.length === 0) return null
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" fill="none">\n${parts.join('\n')}\n</svg>`
+}
+
+async function fetchSvgs(resourcesPath, outputDir, options) {
+  const { pat, baseUrl, fileId, noproxy } = options
+  if (!pat || !baseUrl || !fileId) {
+    console.error('Error: --pat, --base-url, --file-id 参数必填')
+    process.exit(1)
+  }
+  if (!existsSync(resourcesPath)) {
+    console.error(`Error: 文件不存在: ${resourcesPath}`)
+    process.exit(1)
+  }
+
+  const resources = JSON.parse(readFileSync(resourcesPath, 'utf-8'))
+  mkdirSync(outputDir, { recursive: true })
+
+  const svgResources = resources.filter(r => r.resource_type === 'svg')
+  console.error(`发现 ${svgResources.length} 个 SVG 资源，开始逐节点获取 DSL...`)
+
+  const written = []
+  let fetchOk = 0, fetchFail = 0, fallbackCount = 0
+
+  for (const r of svgResources) {
+    const nodeId = r.node_id
+    const name = (r.semantic_name || r.node_id || `svg-${written.length}`)
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
+      .replace(/[_\s]+/g, '-')
+      .replace(/[^a-zA-Z0-9-]/g, '')
+      .toLowerCase()
+
+    // Step 1: Try fetching individual node DSL
+    let svg = null
+    const nodeDsl = await fetchNodeDsl(baseUrl, fileId, nodeId, pat, noproxy)
+    if (nodeDsl && nodeDsl.nodes && nodeDsl.nodes.length > 0) {
+      svg = buildSvgFromNodeDsl(nodeDsl)
+      if (svg) fetchOk++
+    }
+
+    // Step 2: Fallback to pre-built svg_markup from resources.json
+    if (!svg && r.svg_markup) {
+      svg = r.svg_markup
+      fallbackCount++
+    }
+
+    if (!svg) {
+      fetchFail++
+      console.error(`  ✗ ${name} (${r.size}) — 获取失败，跳过`)
+      continue
+    }
+
+    const filePath = pathResolve(outputDir, `${name}.svg`)
+    writeFileSync(filePath, svg, 'utf-8')
+    written.push({ name: `${name}.svg`, node_id: nodeId, size: r.size, source: nodeDsl ? 'api' : 'fallback' })
+    const source = svg !== r.svg_markup ? 'API' : 'fallback'
+    console.error(`  ✓ ${name}.svg (${r.size}) [${source}]`)
+  }
+
+  console.error(`\n完成: ${fetchOk} 个 API 获取, ${fallbackCount} 个 fallback, ${fetchFail} 个失败`)
+  return written
+}
+
 function main() {
   const args = process.argv.slice(2)
   if (args.length < 2) {
@@ -1199,6 +1461,8 @@ function main() {
     console.error('  node dsl-parser.mjs tokens <dsl_raw.json> [output.json]      — 提取 design tokens（含 rgba/渐变/textSegments）')
     console.error('  node dsl-parser.mjs tailwind-map <tailwind.config.*> [output.json] — 生成 Tailwind 值→class 映射表（含 lineHeight/fontWeight）')
     console.error('  node dsl-parser.mjs export-svgs <resources.json> <output-dir>     — 批量导出 SVG 文件到目录')
+    console.error('  node dsl-parser.mjs fetch-svgs <resources.json> <output-dir> --pat <pat> --base-url <url> --file-id <id> [--noproxy]')
+    console.error('                                                                     — 逐节点请求 DSL 后精确重建 SVG（推荐）')
     process.exit(1)
   }
 
@@ -1227,8 +1491,27 @@ function main() {
       }
       break
     }
+    case 'fetch-svgs': {
+      // Parse named args: --pat xxx --base-url xxx --file-id xxx [--noproxy]
+      const namedArgs = {}
+      for (let i = 2; i < args.length; i++) {
+        if (args[i] === '--pat' && args[i + 1]) { namedArgs.pat = args[++i]; continue }
+        if (args[i] === '--base-url' && args[i + 1]) { namedArgs.baseUrl = args[++i]; continue }
+        if (args[i] === '--file-id' && args[i + 1]) { namedArgs.fileId = args[++i]; continue }
+        if (args[i] === '--noproxy') { namedArgs.noproxy = true; continue }
+      }
+      fetchSvgs(inputPath, outputPath || './svgs', namedArgs).then(result => {
+        for (const f of result) {
+          // output to stdout for script consumption
+        }
+      }).catch(err => {
+        console.error('fetch-svgs 执行失败:', err.message)
+        process.exit(1)
+      })
+      break
+    }
     default:
-      console.error(`未知命令: ${command}（支持: resources, tokens, tailwind-map, export-svgs）`)
+      console.error(`未知命令: ${command}（支持: resources, tokens, tailwind-map, export-svgs, fetch-svgs）`)
       process.exit(1)
   }
 }

@@ -27,6 +27,7 @@ name 缺失时**立即**询问用户，不进入后续步骤。
 2. 分析笔记严格遵循 `analysis-template.md` 的 3 章节格式（语义组件树、Design Tokens、资源清单），组件树中每个节点标注关键的 Tailwind class
 3. 分析笔记控制在 80 行以内，只记录对代码生成有价值的信息
 4. 同时更新 ui-pages.json 的 tokens 字段
+5. 组件树中标注 class 时，理解布局意图而非照搬像素：`flex-wrap` 容器中的等宽子项写 `flex-1` 而非 `w-[274px]`，等分卡片写 `flex-1` 而非 `w-[280px]`
 
 **绝对禁止**：
 1. 禁止生成代码（代码生成由 `/fe-dev:ui-gen` 负责）
