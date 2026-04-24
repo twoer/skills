@@ -5,12 +5,12 @@
 ## 命令体系
 
 - **项目初始化**: `/fe-dev:init`、`/fe-dev:claude-init`
-- **Feature 工作流**: `/fe-dev:feat-new` → `feat-req` → `feat-gen` → `feat-exec` → `feat-done` → `feat-archive`
+- **Feature 工作流**: `/fe-dev:feat-new` → `feat-req` → `feat-design`（可选）→ `feat-gen` → `feat-exec` → `feat-done` → `feat-archive`
 - **代码审查与提交**: `/fe-dev:code-review`、`/fe-dev:commit`（`--push` 可推送）、`/fe-dev:gitee-pr`
 - **UI 设计稿**: `/fe-dev:ui-setup` → `ui-add` → `ui-gen` → `ui-check`
   - 查看: `/fe-dev:ui`
   - 更新: `/fe-dev:ui-update`
-- **Spec 规范**: `/fe-dev:spec-api-sync`、`spec-req-gen`、`spec-req-exec`
+- **Spec 规范**: `/fe-dev:spec-api-sync`、`spec-design`（可选，OpenAPI 预填 4.2）、`spec-req-gen`、`spec-req-exec`
 
 完整命令列表见 `/fe-dev:index` 或 README.md。
 

@@ -12,6 +12,7 @@
 | `{author}` | 创建人 | `git config user.name` | zhangkun |
 | `{baseBranch}` | 源分支 | 用户选择 | master |
 | `{branchName}` | 分支名（同 name） | 同 name | user-management |
+| `{branchFull}` | 完整分支名 | `git branch --show-current` | feat/user-management 或 dev-branch |
 | `{requirementDoc}` | 需求文档链接 | 用户输入（可为空） | https://feishu.cn/doc/xxx |
 | `{prototypeUrl}` | 原型地址 | 用户输入（可为空） | https://figma.com/file/xxx |
 
@@ -19,9 +20,10 @@
 
 | 模板文件 | 输出路径 | 使用的变量 |
 |----------|----------|-----------|
-| feat-index.md | `docs/features/feat-{name}/index.md` | 全部 |
+| feat-index.md | `docs/features/feat-{name}/index.md` | `{name}` `{description}` `{createdAt}` `{author}` `{baseBranch}` `{branchFull}` `{requirementDoc}` `{prototypeUrl}` |
 | feat-plan.md | `docs/features/feat-{name}/dev/plan.md` | — |
 | feat-exec.md | `docs/features/feat-{name}/dev/exec.md` | `{date}` |
 | feat-test.md | `docs/features/feat-{name}/dev/test.md` | — |
 | feat-review.md | `docs/features/feat-{name}/dev/review.md` | — |
 | feat-links.md | `docs/features/feat-{name}/requirements/links.md` | — |
+| design-template.md | feat: `docs/features/feat-{name}/design/design.md`<br>spec: `apps/frontend/docs/{branchKey}/design.md` | `{name}` `{description}` `{createdAt}` `{author}` `{branchFull}` `{requirementDoc}` `{prototypeUrl}`（`{branchName}` 不用，改用 `{branchFull}`） |

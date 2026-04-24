@@ -28,6 +28,9 @@ allowed-tools: Read, Grep, Glob
 | `/fe-dev:feat-req` | 查看当前 feat 的需求链接 |
 | `/fe-dev:feat-req add <url> [alias]` | 添加需求链接 |
 | `/fe-dev:feat-req sync [alias]` | 同步需求文档 |
+| `/fe-dev:feat-design [name]` | 生成前端详细设计文档（服务评审 + AI 执行） |
+| `/fe-dev:feat-design [name] update` | 评审反馈后迭代设计文档 |
+| `/fe-dev:feat-design [name] check` | 设计文档质量自检 |
 | `/fe-dev:feat-gen [name]` | 生成开发计划 + 测试计划 |
 | `/fe-dev:feat-gen [name] plan` | 只生成开发计划 |
 | `/fe-dev:feat-gen [name] test` | 只生成测试计划 |
@@ -52,6 +55,9 @@ allowed-tools: Read, Grep, Glob
 | 命令 | 说明 |
 |------|------|
 | `/fe-dev:spec-api-sync` | 从 OpenAPI 规范生成 TypeScript 类型和 Service |
+| `/fe-dev:spec-design [branchKey]` | 基于需求 + OpenAPI 生成前端详细设计（自动预填 4.2 后端对接接口） |
+| `/fe-dev:spec-design [branchKey] update` | 评审反馈后迭代设计文档 |
+| `/fe-dev:spec-design [branchKey] check` | 设计文档质量自检（含 OpenAPI 一致性） |
 | `/fe-dev:spec-req-gen` | 分析需求文档，生成需求分析和执行计划 |
 | `/fe-dev:spec-req-exec` | 按需求计划逐任务执行开发（支持断点续传） |
 

@@ -90,6 +90,7 @@ mkdir -p docs/features/feat-{name}/dev
 | `{author}` | `git config user.name` |
 | `{baseBranch}` | 步骤 2.5 选择 |
 | `{branchName}` | 同 name |
+| `{branchFull}` | `git branch --show-current`（步骤 4 切换后），通常为 `feat/{name}` |
 | `{requirementDoc}` | 步骤 2 输入（可为空） |
 | `{prototypeUrl}` | 步骤 7 输入（可为空） |
 

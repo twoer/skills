@@ -43,6 +43,26 @@ allowed-tools: Read, Grep, Glob, Bash, Write
 
 返回：受影响的现有任务 / 需要新增的任务 / 需要修改的任务
 
+### 步骤 5.5: 检测 design.md（如存在）
+
+```bash
+ls docs/features/feat-{name}/design/design.md 2>/dev/null
+```
+
+**存在时**提示：
+
+```
+⚠️ 检测到 design.md，本次需求变更可能影响以下章节：
+  - 三、详细设计（模块/流程变化时）
+  - 四、接口设计（字段/接口变化时）
+  - 七、改动说明（新增/删除改动点时）
+
+建议手动检查 design.md，如需更新可运行：
+  /fe-dev:feat-design {name} update
+```
+
+**不自动修改 design.md**（架构变更需要人工判断）。
+
 ### 步骤 6: 询问处理方式
 
 AskUserQuestion：

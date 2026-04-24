@@ -36,6 +36,9 @@
 | `/fe-dev:feat-req` | 查看当前 feat 的需求链接 |
 | `/fe-dev:feat-req add <url> [alias]` | 添加需求链接到当前 feat |
 | `/fe-dev:feat-req sync [alias]` | 同步需求文档 |
+| `/fe-dev:feat-design [name]` | 生成前端详细设计文档（服务评审 + AI 执行） |
+| `/fe-dev:feat-design [name] update` | 评审反馈后迭代设计文档 |
+| `/fe-dev:feat-design [name] check` | 设计文档质量自检 |
 | `/fe-dev:feat-gen [name]` | 生成开发计划 + 测试计划 |
 | `/fe-dev:feat-gen [name] plan` | 只生成开发计划 |
 | `/fe-dev:feat-gen [name] test` | 只生成测试计划 |
@@ -71,6 +74,9 @@
 | 命令 | 说明 |
 |------|------|
 | `/fe-dev:spec-api-sync` | 从 OpenAPI 规范生成 TypeScript 类型和 Service |
+| `/fe-dev:spec-design [branchKey]` | 基于需求 + OpenAPI 生成前端详细设计（自动预填 4.2 后端对接接口） |
+| `/fe-dev:spec-design [branchKey] update` | 评审反馈后迭代设计文档 |
+| `/fe-dev:spec-design [branchKey] check` | 设计文档质量自检（含 OpenAPI 一致性） |
 | `/fe-dev:spec-req-gen` | 分析需求文档，生成需求分析和执行计划 |
 | `/fe-dev:spec-req-exec` | 按需求计划逐任务执行开发（支持断点续传） |
 
@@ -238,7 +244,9 @@ npm install -g feishu-to-md-mcp
 | `/fe-dev:feat-new` | `docs/features/feat-{name}/` | `index.md`、`dev/plan.md`、`dev/exec.md`、`dev/test.md`、`dev/review.md`、`requirements/links.md` |
 | `/fe-dev:feat-req add/sync` | `docs/features/feat-{name}/requirements/` | `links.md`、`product-doc-v{n}.md`（同步后的需求文档）、`product-doc-diff-v{旧}-v{新}.md` |
 | `/fe-dev:feat-update` | `docs/features/feat-{name}/` | `requirements/extra.md`、`dev/plan.md`（追加任务）、`dev/change-{date}.md` |
+| `/fe-dev:feat-design` | `docs/features/feat-{name}/design/` | `design.md`（前端详细设计，服务评审 + AI 执行参考） |
 | `/fe-dev:feat-gen` | `docs/features/feat-{name}/` | `requirements/checklist.md`、`dev/plan.md`、`dev/test.md` |
+| `/fe-dev:spec-design` | `apps/frontend/docs/{branchKey}/` | `design.md`（前端详细设计，4.2 章节由 OpenAPI 预填） |
 | `/fe-dev:spec-req-gen` | `apps/frontend/docs/{branchKey}/` | `requirements.md`、`plan.md` |
 | `/fe-dev:spec-req-exec` | `apps/frontend/docs/{branchKey}/` | `plan.md`（更新状态）、`exec.md`、业务代码文件 |
 
@@ -281,10 +289,12 @@ fe-dev/
 │   ├── feat-done/SKILL.md        # 标记功能完成
 │   ├── feat-archive/SKILL.md     # 归档功能
 │   ├── feat-req/SKILL.md         # 需求文档管理（依赖 feishu-to-md-mcp）
+│   ├── feat-design/SKILL.md      # 前端详细设计文档（可选，依赖 superpowers）
 │   ├── feat-gen/SKILL.md         # 生成开发/测试计划（依赖 superpowers）
 │   ├── feat-exec/SKILL.md        # 执行开发任务
 │   ├── feat-update/SKILL.md      # 需求变更管理
 │   ├── spec-api-sync/SKILL.md    # OpenAPI 规范同步
+│   ├── spec-design/SKILL.md      # 前端详细设计文档（OpenAPI 预填 4.2，依赖 superpowers）
 │   ├── spec-req-gen/SKILL.md     # 需求分析与执行计划生成
 │   ├── spec-req-exec/SKILL.md    # 按需求计划执行开发
 │   ├── ui/SKILL.md               # 设计稿列表
