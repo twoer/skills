@@ -65,7 +65,7 @@
 | `/fe-dev:code-review` | 代码审查（ast-lint 静态分析 + 语义审查），行级 diff 视角 |
 | `/fe-dev:code-review --staged` | 仅审查已暂存的变更 |
 | `/fe-dev:code-review <file>` | 审查指定文件 |
-| `/fe-dev:arch-audit` | 架构审计（6 维度宏观体检），输出报告到 `docs/audits/` |
+| `/fe-dev:arch-audit` | AI 代码体检（6 维度 LLM 反模式审计 + 待观察池），输出报告到 `docs/audits/` |
 | `/fe-dev:commit` | 代码审查 + 提交（加 `--push` 可推送） |
 | `/fe-dev:gitee-pr` | 通过浏览器自动创建 Gitee PR（code.iflytek.com） |
 | `/fe-dev:gitee-pr <branch>` | 指定目标分支（默认 dev） |
@@ -265,7 +265,7 @@ npm install -g feishu-to-md-mcp
 
 | 命令 | 创建路径 | 说明 |
 |------|---------|------|
-| `/fe-dev:arch-audit` | `docs/audits/audit-{YYYY-MM-DD-HHmm}.md` | 架构审计报告，只读分析不改业务代码 |
+| `/fe-dev:arch-audit` | `docs/audits/audit-{YYYY-MM-DD-HHmm}.md` | AI 代码体检报告；同时可能追加新模式到 `fe-dev/references/arch-audit-pending-patterns.md` |
 
 ### 设计数据（`docs/features/feat-{name}/ui/`）
 
@@ -311,7 +311,7 @@ fe-dev/
 │   ├── ui-update/SKILL.md        # 设计稿更新
 │   ├── ui-check/SKILL.md         # 质量检查
 │   ├── code-review/SKILL.md      # 代码审查（ast-lint + 语义审查）
-│   ├── arch-audit/SKILL.md       # 架构审计（6 维度宏观体检）
+│   ├── arch-audit/SKILL.md       # AI 代码体检（6 维度 LLM 反模式 + 自演化知识库）
 │   ├── commit/SKILL.md           # 审查 + 提交（--push 可推送）
 │   └── gitee-pr/                 # Gitee PR 创建
 │       ├── SKILL.md
@@ -338,7 +338,8 @@ fe-dev/
     ├── feat-utils.md
     ├── ui-utils.md
     ├── code-review-rules.md      # 代码审查规则（Vue 3 + Nuxt 4）
-    └── arch-audit-checklist.md   # 架构审计 6 维度规则
+    ├── arch-audit-checklist.md   # AI 代码体检 - LLM 反模式知识库（known 状态）
+    └── arch-audit-pending-patterns.md  # AI 代码体检 - 待观察反模式池（pending 状态）
 ```
 
 ## 项目模板

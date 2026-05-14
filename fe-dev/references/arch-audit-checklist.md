@@ -1,294 +1,379 @@
-# 架构审计清单
+# AI 代码体检 / LLM 反模式知识库
 
-> 用于 `/fe-dev:arch-audit` 的 6 项检查规则。
+> 用于 `/fe-dev:arch-audit` 的反模式检测规则。
 >
-> **定位**：宏观体检（架构 / 规范 / 配置 / 最佳实践），与 `code-review` 的"行级 diff 审查"互补，**不重叠**。
+> **定位**：专门检测 LLM 写代码的"指纹"——人类很少这么写、LLM 频繁这么写的模式。**不查通用代码质量**（那是 code-review / ast-lint 的事）。
 > **置信度门槛**：≥ 80% 才报告，不猜测。
-> **输出严重度**：🔴 critical / 🟡 major / 🔵 minor / ⚪ architectural（仅建议，不自动改）。
+> **严重度**：🔴 critical / 🟡 major / 🔵 minor / ⚪ architectural
+
+## 反模式编号规则
+
+| 前缀 | 含义 |
+|---|---|
+| `M-NNN` | known 状态的已知反模式（modes） |
+| `P-NNN` | 待观察池里的候选（pending），在 `arch-audit-pending-patterns.md` 中管理 |
+| `R-NNN` | 已退役模式（retired），保留在本文末尾仅供追溯 |
+
+## 三态管理
+
+| 状态 | 进入检测 | 进入修复列表 | 报告中表现 |
+|---|---|---|---|
+| **known** | ✅ | ✅ | 命中即报问题 |
+| **pending** | 提示性匹配 | ❌ | 仅累计命中次数，不报问题 |
+| **retired** | ❌ | ❌ | 完全跳过 |
 
 ---
 
-## 一、技术架构 / 技术栈主流性
+## 一、命名 & 字段一致性
 
-### 1.1 新引入依赖的合理性 🟡 major
+> LLM 跨文件独立生成时最易出问题：同一概念命名漂移、复制粘贴未完整改名。单文件 review 看不出来，跨文件视角刚好能查。
 
-**检测**（使用 SKILL 步骤 2 中确定的 commit 范围变量 `<base>..HEAD`，避免 `HEAD~3` 在小仓库失败）：
+### [M-001] 同一概念跨文件命名漂移 🟡 major · known
 
-```bash
-git diff <base>..HEAD -- package.json | grep -E '^\+\s+"[^"]+"\s*:'
+**模式**：相同业务概念在不同文件用不同标识符。
+
+- A.ts: `userId: string`
+- B.ts: `user_id: string`
+- C.ts: `uid: string`
+
+**检测**：
+
+1. 提取 `<changed_files>` 中所有变量名 / 字段名 / 函数参数名（重点 interface / type / Props / 函数签名）
+2. 找出语义相近但拼写不同的组合（驼峰 / 下划线 / 缩写互转）
+3. 同一仓库内出现 2+ 种写法 → 报告
+
+**建议**：统一为项目主流命名（看 majority 写法）。
+
+**首次记录**：2026-05-14
+
+### [M-002] 复制粘贴模板未完整改名 🔴 critical · known
+
+**模式**：复制了一段相似代码改了部分变量，但留了原模板的字段/字符串。
+
+例：复制"用户列表"做"订单列表"，新文件却仍有 `userName`、`user.role`、提示文案"用户已删除"。
+
+**检测**：
+
+1. 在新增/修改的文件里，看是否出现"上下文 = X 但用了 Y 概念的字段名"
+2. 重点查文案、注释、变量名与文件名/组件名的语义匹配
+
+**建议**：完整替换，不留遗漏。
+
+**首次记录**：2026-05-14
+
+### [M-003] 路由 / API 路径与对应资源名不一致 🟡 major · known
+
+**模式**：路由是 `/orders`，但页面组件叫 `UserList.vue`、service 文件叫 `userService.ts`。复制粘贴遗症。
+
+**检测**：对每个变更的 page / service / store，检查路径段、文件名、内部主对象名三者是否一致。
+
+**首次记录**：2026-05-14
+
+---
+
+## 二、错误处理与边界覆盖
+
+> LLM 极度偏向 happy path。"如果一切顺利"那一支总是写得很好；空、错、超时这些分支经常缺。
+
+### [M-101] async 函数未 catch 🔴 critical · known
+
+**模式**：
+
+```ts
+async function load() {
+  const data = await api.fetch()
+  state.list = data        // ← 没有 try/catch，请求失败时 state.list 不更新且无任何提示
+}
 ```
 
-**判断**：
+**检测**：
 
-- 新依赖是否已被既有依赖覆盖（如同时存在 `axios` + `ofetch`、`lodash` + `lodash-es`、`dayjs` + `moment`）
-- 新依赖最近 12 个月是否有发版（停止维护风险）
-- 是否引入了与当前技术栈冲突的方案（如 Nuxt 4 项目引入 Next.js 专属库）
-
-**输出**：列出新增依赖及风险评估，未命中则标 ✅。
-
-### 1.2 目录结构异动 ⚪ architectural
-
-**检测**（沿用 SKILL 步骤 2 的 `<changed_files>`）：
-
-```bash
-echo "$<changed_files>" | grep -E '^(app|server|components|composables|stores|pages|layouts|middleware|plugins|utils|types|services)/' | awk -F/ '{print $1}' | sort -u
+```
+grep -nE 'async\s+function|async\s*\(' <changed_files>
 ```
 
-**判断**：
+对每处 hit，检查：
 
-- 是否在已有目录约定外新建顶级目录（如 Nuxt 4 项目出现 `src/` 或 `lib/`）
-- 是否打破 `app/` 与 `server/` 分层
-- 是否把业务逻辑放到 `utils/` 等本应只放纯工具的目录
+- 是否有外层 try/catch
+- 调用方是否有 .catch
+- 返回的 Promise 是否在调用链最末端被消费
 
-**输出**：仅作 architectural 建议，不阻断。
+均无 → critical。
+
+**首次记录**：2026-05-14
+
+### [M-102] Promise 链断尾 🟡 major · known
+
+**模式**：`.then(...)` 后没 `.catch(...)`，且未 await。
+
+**首次记录**：2026-05-14
+
+### [M-103] 空数组 / null / undefined 边界未处理 🟡 major · known
+
+**模式**：
+
+```ts
+const first = list[0].name       // ← list 可能为空
+const name = user?.profile.name  // ← profile 可能为 null
+```
+
+**检测**：
+
+1. grep `\[0\]\.|\[length - 1\]\.` → 直接索引未守卫
+2. grep `\?\.\w+\.\w+` → 链式访问中间值未守卫
+3. 函数参数 / 返回值与类型签名对照，可空类型未处理
+
+**首次记录**：2026-05-14
+
+### [M-104] 用户输入未校验 🟡 major · known
+
+**模式**：表单提交、URL query 参数、外部 API 响应直接当可信数据用。
+
+**检测**：在 service / store / page 中接收外部数据后是否有 schema 校验 / typeof / 范围检查。
+
+**首次记录**：2026-05-14
 
 ---
 
-## 二、CLAUDE.md 规则符合度
+## 三、依赖完整性（响应式依赖项漏写）
 
-> 前置：项目根目录 `CLAUDE.md` 存在。否则本项跳过。
+> LLM 复制别人的 hook / watch / computed 时，经常忘记同步改 deps，或者新增的依赖没加进 deps 数组。
 
-### 2.1 硬规则违反 🔴 critical
+### [M-201] Vue watch source 漏依赖 🔴 critical · known
 
-读取项目 `CLAUDE.md`，提取所有"禁止 / 不允许 / must not / forbidden"语句，逐条比对变更文件：
+**模式**：
 
-- 禁止用法是否出现在变更代码中
-- 禁止的目录、文件名模式
-- 禁止的导入路径（如 `import from '@/legacy/*'`）
+```ts
+watch(() => formData.subtype, (v) => {
+  loadOptions(formData.category, formData.subtype) // ← category 未在 source 中
+})
+```
 
-**输出**：命中的违反项 → critical，附文件:行号 + CLAUDE.md 中对应的原文引用。
+**检测**：对每个 `watch(...)`：
 
-### 2.2 推荐规范偏离 🟡 major
+1. 提取 source（第一参 getter）引用的响应式属性
+2. 提取 callback 中使用的响应式属性
+3. callback 用到但 source 没声明的属性 → 漏依赖
 
-读取 CLAUDE.md 中"推荐 / 优先 / should / 约定"语句：
+**首次记录**：2026-05-14
 
-- 推荐用法未采用（如 CLAUDE.md 写"优先 Element Plus 组件"但变更里裸写了原生 `<input>`）
-- 命名约定偏离（如 CLAUDE.md 要求 `use*` 前缀但 composable 命名不符）
+### [M-202] computed 内引用响应式属性漏算 🟡 major · known
 
-**输出**：major，附文件:行号 + 建议改写。
+**模式**：computed 内引用 `state.X` 但 X 是普通对象（非 ref/reactive），无法触发更新。
 
-### 2.3 路径约定违反 🟡 major
+**首次记录**：2026-05-14
 
-按 CLAUDE.md 中的路径约定检查（fe-dev 项目示例：`docs/features/feat-{name}/`）：
+### [M-203] React useEffect / useMemo / useCallback deps 数组漏依赖 🔴 critical · known
 
-- 新建文件是否放对位置
-- 跨域引用是否绕过分层
+**模式**：函数体内引用了外部变量但 deps 数组没列出。常见于 LLM 从别处复制的 hook。
+
+**检测**：对每个 useEffect/useMemo/useCallback，比对函数体引用 vs deps 列表。
+
+**首次记录**：2026-05-14
+
+### [M-204] Pinia getter 内依赖漏算 🟡 major · known
+
+**模式**：getter 内依赖 store 外部状态（其他 store / global），未通过 store action 注入。
+
+**首次记录**：2026-05-14
 
 ---
 
-## 三、Vue 最佳实践（含 style）
+## 四、常量与工具复用
 
-> 仅审 `.vue` 文件。
+> LLM 不主动查项目已有 `constants/` `utils/` `composables/`，每个文件各写各的；导致同一字面量、同一工具函数在多处重复。
 
-### 3.1 响应式陷阱 🔴 critical / 🟡 major
+### [M-301] 已有常量目录但仍硬编码 🟡 major · known
 
-| 模式 | 严重度 | 检测要点 |
-|---|---|---|
-| `watch(formData.subtype, ...)` 直接传响应式属性 | major | 缺 getter，只触发一次 |
-| `computed` 中包含赋值/请求 | critical | computed 不应有副作用 |
-| `reactive(primitiveValue)` 包装基本类型 | major | 应改用 `ref()` |
-| 模板内大量内联对象 `:style="{ color }"` | minor | 提取 computed |
+**模式**：项目根有 `app/constants/`（或 `constants/`），但变更中仍出现:
 
-### 3.2 生命周期清理 🔴 critical
-
-变更中出现 `setInterval` / `setTimeout` / `addEventListener` / `subscribe` 时：
-
-- 是否在 `onBeforeUnmount` / `onUnmounted` 清理
-- Composable 内是否暴露清理函数或自身处理
+- 硬编码超时时间、轮询间隔、分页大小
+- 硬编码状态码、错误码字面量
+- 重复的字符串 enum
 
 **检测**：
 
 ```bash
-grep -nE 'setInterval|setTimeout|addEventListener' <changed_vue_files>
+ls app/constants/ constants/ 2>/dev/null  # 看是否有常量目录
 ```
 
-对每处 hit 检查同文件是否有对应的 clear / remove。
+存在 → 在变更里找应抽常量的字面量。
 
-### 3.3 v-for / v-if 反模式 🟡 major
+**首次记录**：2026-05-14
 
-- `v-for` 使用 index 作为 key 且列表可重排序
-- 同元素 `v-if` + `v-for`（v-if 应外移）
+### [M-302] 同一字面量在 2+ 文件重复 🟡 major · known
 
-### 3.4 样式优先级 🟡 major
+**模式**：同一个有业务含义的字面量（不是 0/1）在多处独立出现。
 
-按 fe-dev CLAUDE.md 优先级（Element Plus > Tailwind class > `@apply` > Scoped SCSS）检查：
+**检测**：
 
-- 内联 `style="..."` → major
-- 全局 SCSS（无 `scoped`） → major
-- `!important` → major
-- `<style>` 中裸写 Tailwind class（不在 `@apply` 内） → major
+```bash
+# 提取所有字符串/数字字面量，跨文件去重计数
+```
 
-### 3.5 组件体积 🔵 minor
+同字面量在 2+ 文件 → major。
 
-`<script setup>` 区块 > 300 行 → 提示拆分。
+**首次记录**：2026-05-14
+
+### [M-303] 工具函数复造 🟡 major · known
+
+**模式**：变更中实现了一个工具函数（如 formatDate、deepClone、debounce），但项目 `utils/` 或 VueUse / lodash 已有同名/同功能函数。
+
+**检测**：扫 `utils/` 已有导出 + 项目依赖（package.json）。
+
+**首次记录**：2026-05-14
+
+### [M-304] composable 复造 🟡 major · known
+
+**模式**：新写了一个 composable（`useX`），但项目已有同名/同语义的。
+
+**首次记录**：2026-05-14
 
 ---
 
-## 四、公共常量提取
+## 五、定时与异步生命周期
 
-### 4.1 数字字面量 🟡 major
+> LLM 用 setInterval / setTimeout / 订阅 / 长轮询时，最常漏的是清理；写竞态保护和退避的更少。
 
-变更中检测：
+### [M-401] setInterval / setTimeout 未清理 🔴 critical · known
 
-```bash
-# 排除 0/1/2/-1/数组索引等常见值
-grep -nE '\b([3-9]|[1-9][0-9]+|0\.[0-9]+)\b' <changed_files>
-```
+**模式**：组件内调用 `setInterval` 但 `onBeforeUnmount` / `onUnmounted` 未 `clearInterval`。
 
-判定"应抽常量"的模式：
-
-- 同一数值在 2+ 处出现
-- 出现在 `setInterval` / `setTimeout` / 超时配置 / 重试次数 / 分页 size
-- 出现在样式断点（应走 Tailwind config）
-
-**已有常量目录检测**：
+**检测**：
 
 ```bash
-ls app/constants/ 2>/dev/null || ls constants/ 2>/dev/null
+grep -nE 'setInterval|setTimeout' <changed_files>
 ```
 
-存在则建议把字面量挪进去。
+对每处 hit，检查同文件是否有对应 `clear*` 调用。Composable 也要查（应暴露清理函数或自己处理）。
 
-### 4.2 字符串字面量 🟡 major
+**首次记录**：2026-05-14
 
-- 重复出现的 URL / API 路径片段（应抽常量或走 service 层）
-- 重复出现的提示文案（应走 i18n）
-- 枚举值（应抽 enum 或 const as const）
+### [M-402] addEventListener / 订阅未移除 🔴 critical · known
 
-### 4.3 错误码 / 状态码 🟡 major
+**模式**：`window.addEventListener` / `EventBus.on` / Pinia subscribe / WebSocket 监听未在生命周期对端清理。
 
-`200` / `400` / `401` / `500` 等 HTTP 状态裸用 → 建议抽 `HTTP_STATUS` 枚举。
+**首次记录**：2026-05-14
+
+### [M-403] 轮询无错误退避 / 无失败上限 🟡 major · known
+
+**模式**：
+
+```ts
+setInterval(async () => {
+  const data = await api.fetch()  // ← 失败时无处理，下次还会继续轮询，可能雪崩
+  state.list = data
+}, 3000)
+```
+
+**检测**：轮询体内是否有 try/catch + 失败计数 + 失败累计后停止 / 退避。
+
+**首次记录**：2026-05-14
+
+### [M-404] 多个组件重复轮询同一资源 🟡 major · known
+
+**模式**：A 组件每 5s 轮询 `/api/orders`，B 组件也每 5s 轮询同 URL。应抽到统一 Store / Composable。
+
+**检测**：
+
+1. 找所有含 timer 的文件
+2. 提取每个 timer 内调用的 endpoint
+3. 同 endpoint 出现在 2+ 处 → major
+
+**首次记录**：2026-05-14
+
+### [M-405] 异步请求未取消（竞态）🟡 major · known
+
+**模式**：watch 触发请求，新值来时旧请求仍在路上，旧响应回来时覆盖了新数据。
+
+**检测**：watch + 异步请求场景，是否有 `AbortController` / 请求 ID 比对 / `signal` 传入。
+
+**首次记录**：2026-05-14
 
 ---
 
-## 五、定时配置（cron / setInterval / 轮询）
+## 六、守卫漏写（CLAUDE.md / i18n / 类型）
 
-### 5.1 硬编码间隔时间 🟡 major
+> 项目级硬规则、国际化、类型守卫——LLM 不主动遵守，因为它在生成时没有"这个项目要求 X"的强约束。
+
+### [M-501] CLAUDE.md 硬规则违反 🔴 critical · known
+
+**前置**：变更文件向上能找到 CLAUDE.md。
+
+**检测**：读取该 CLAUDE.md，提取"禁止 / 不允许 / must not / forbidden / 不要 / 不得"语句，逐条比对变更代码。
+
+**首次记录**：2026-05-14
+
+### [M-502] CLAUDE.md 推荐规范偏离 🟡 major · known
+
+**检测**：CLAUDE.md "推荐 / 优先 / should / 约定" 的对应规范未遵守。
+
+**首次记录**：2026-05-14
+
+### [M-503] 硬编码用户可见文案（i18n 漏迁移）🟡 major · known
+
+**前置**：项目使用 vue-i18n / react-intl 等 i18n 框架（检测 package.json / locales 目录）。
+
+**模式**：模板里 / ElMessage / alert / console 中出现中文/英文用户可见文案，未走 `t()` / `$t()`。
+
+**首次记录**：2026-05-14
+
+### [M-504] 类型 any 逃逸 🟡 major · known
+
+**模式**：`as any` / `Record<string, any>` / `: any` / `<any>` 显式逃逸类型系统。
+
+**检测**：
 
 ```bash
-grep -nE 'set(Interval|Timeout)\s*\(' <changed_files>
+grep -nE 'as\s+any|:\s*any\b|<any>|Record<\s*string\s*,\s*any\s*>' <changed_files>
 ```
 
-每处检查：
+排除测试 mock / 故意逃逸（带 `// @ts-expect-error` 或 `// eslint-disable` 解释）。
 
-- 第二个参数是否字面量（应抽 `constants/timing.ts` 之类）
-- 数值是否合理（< 1000ms 频率过高需说明理由）
+**首次记录**：2026-05-14
 
-### 5.2 清理逻辑缺失 🔴 critical
+### [M-505] 跨边界数据未类型守卫 🟡 major · known
 
-参见 3.2 生命周期清理，重复但单独标记，因为这是 LLM 最常漏的点。
+**模式**：从 API / localStorage / URL 读取数据后直接当强类型使用，未做 typeof / Zod / 校验。
 
-### 5.3 页面可见性处理 🔵 minor
-
-长期运行的轮询（如 dashboard 实时刷新）：
-
-- 是否监听 `visibilitychange` 在后台暂停
-- 是否用 `useDocumentVisibility` / `useIntervalFn` 等 VueUse 工具
-
-未处理 → minor 建议。
-
-### 5.4 错误退避 🟡 major
-
-轮询请求失败时：
-
-- 是否有重试上限
-- 是否有指数退避或熔断
-- 连续失败是否会无限刷请求
-
-### 5.5 重复轮询同一资源 🟡 major
-
-**检测策略**（grep 不够准，需结合语义判断）：
-
-1. 用 `Grep` 找出**含 timer 的文件清单**：
-   ```
-   pattern: 'set(Interval|Timeout)\\s*\\(', output_mode: 'files_with_matches'
-   ```
-2. 对这些文件用 `Read` 获取上下文，提取其轮询调用的 **API endpoint / store action / composable 名**
-3. 若同一 endpoint 被多个文件轮询 → 报告"重复轮询"
-
-**判断**：同一 URL/资源被 2+ 处独立轮询 → 建议抽到统一 Store/Composable 订阅，下游 watch 即可。
-
----
-
-## 六、项目配置合理性
-
-> **触发条件（放宽）**：diff 涉及任意"配置类"文件即触发，包括但不限于：
->
-> - **依赖与构建**：`package.json`、`package-lock.json`、`pnpm-lock.yaml`、`yarn.lock`、`*.config.{ts,js,mjs,cjs}`（含 `nuxt.config.*` / `vite.config.*` / `tailwind.config.*` / `tsup.config.*` 等）
-> - **TypeScript**：`tsconfig*.json`、`jsconfig*.json`
-> - **Lint / 格式**：`eslint.config.*` / `.eslintrc*` / `stylelint.config.*` / `.prettierrc*` / `biome.json`
-> - **隐藏 rc 配置**：`.npmrc` / `.nvmrc` / `.node-version` / `.editorconfig` 等 `.*rc*`
-> - **Git / Husky**：`.gitignore` / `.gitattributes` / `.husky/`
-> - **CI / 部署**：`.github/workflows/*.yml` / `.gitlab-ci.yml` / `Dockerfile` / `docker-compose.*`
-> - **项目类型自有配置**：如 skill 插件的 `plugin.json` / `marketplace.json`，VS Code 扩展的 `extension.json`，Chrome 扩展的 `manifest.json`
->
-> **匹配策略**：先用上述清单 glob 匹配；未命中但文件名形如 `*.json` / `*.{yaml,yml}` / `*.toml` 且位于仓库根或 `.config/` / `config/` 下 → 也纳入审计，由 LLM 根据文件实际作用判断是否真审（lock 文件、IDE 个人配置如 `.vscode/settings.json` 等可跳过）。
-> 完全未匹配 → 本项标 ✅。
-
-### 6.1 package.json 🟡 major
-
-- `dependencies` 与 `devDependencies` 分类是否合理（如 `@types/*` 误放 dependencies）
-- 版本号锁定方式（混用 `^` / `~` / 固定版本）
-- `engines` 字段是否声明 Node 版本
-- 重复依赖（同一库不同版本同时存在）
-
-### 6.2 nuxt.config.ts 🟡 major
-
-- `runtimeConfig` 与 `publicRuntimeConfig` 是否混淆（敏感配置误放 public）
-- `ssr` / `nitro` 配置与项目实际场景是否匹配
-- 模块顺序（`@nuxtjs/i18n` / `@pinia/nuxt` 等推荐位置）
-
-### 6.3 tsconfig 🟡 major
-
-- `strict: true` 是否开启
-- `noUnusedLocals` / `noImplicitReturns` 等推荐项
-- path alias 与 `nuxt.config` 是否一致
-
-### 6.4 ESLint / Prettier / Stylelint ⚪ architectural
-
-- 规则集是否覆盖 TS + Vue + 项目实际栈
-- 是否有规则冲突（如 Prettier 与 ESLint stylistic）
-- `.husky/` pre-commit 是否启用
-
-### 6.5 .gitignore 🔵 minor
-
-- 是否忽略了 `.env*`、`dist/`、`.nuxt/`、`node_modules/`
-- 是否误忽略了应入库的配置模板
-
-### 6.6 项目类型自有配置 🟡 major
-
-对非 Nuxt/Vue 的项目特定配置（`plugin.json` / `marketplace.json` / `manifest.json` / `extension.json` 等）：
-
-- **必填字段完整性**：`name` / `version` / `description` 等基础元信息齐全
-- **版本号一致性**：插件/扩展类项目，`plugin.json` 的 `version` 与 `package.json` / `marketplace.json` 是否同步
-- **路径有效性**：配置中引用的文件路径（`main` / `entry` / `icon` 等）是否真实存在
-- **冗余字段**：废弃字段、与新版规范不符的字段
-- **许可证 / 作者**：`license` / `author` 是否声明
-
-> 该子项让 LLM 根据具体文件类型自适应审查，不要求穷举所有项目类型。
+**首次记录**：2026-05-14
 
 ---
 
 ## 报告输出对应关系
 
-每项审计完成后，按以下结构写入报告对应章节：
+每维度审计完成后，按以下结构写入报告：
 
 ```markdown
 ## N. <维度名>
 
 ### 检查结果
-- 🔴 critical: N 项
-- 🟡 major: N 项
-- 🔵 minor: N 项
-- ⚪ architectural: N 项（仅建议）
+- 🔴 critical: N 项 · 🟡 major: N 项 · 🔵 minor: N 项 · ⚪ architectural: N 项
 
-### 问题清单
+### 命中模式
 
 #### 🔴 critical
-- `path/to/file.vue:42` — 问题描述。建议：...
+- **[M-XXX]** `path/to/file.vue:42` — <问题摘要>
+  - 建议：<...>
 
 #### 🟡 major
 - ...
 
-（无问题时写"✅ 本维度未发现问题"）
+（无命中 → "✅ 本维度未发现已知反模式"）
 ```
+
+---
+
+## 已退役模式（retired）
+
+> 这里保留已退役模式的编号和退役原因，方便追溯。**不参与检测**。
+
+（暂无）
+
+---
+
+## 维护说明
+
+- **新模式入池**：`arch-audit` 检测时发现新模式 → 由用户确认后写入 `arch-audit-pending-patterns.md`（编号 P-NNN）
+- **转正**：月度评审，命中次数 ≥ 3 且误报率低的 pending 模式，迁移到本文件并改编号为 M-NNN
+- **退役**：known 模式若长期误报率高、被用户多次撤销，迁移到本文件末尾"已退役模式"段落，编号改为 R-NNN

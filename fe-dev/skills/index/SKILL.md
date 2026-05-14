@@ -44,7 +44,7 @@ allowed-tools: Read, Grep, Glob
 | 命令 | 说明 |
 |------|------|
 | `/fe-dev:code-review` | 代码审查（行级 diff，ast-lint + 语义） |
-| `/fe-dev:arch-audit` | 架构审计（6 维度宏观体检），输出到 `docs/audits/` |
+| `/fe-dev:arch-audit` | AI 代码体检（6 维度 LLM 反模式 + 自演化知识库），输出到 `docs/audits/` |
 | `/fe-dev:commit` | 代码审查 + 提交（`--push` 可推送） |
 | `/fe-dev:gitee-pr` | 通过浏览器自动创建 Gitee PR |
 

@@ -1,52 +1,74 @@
 ---
 name: arch-audit
-description: 架构与规范审计，从 6 个维度宏观体检代码（架构/规范/Vue/常量/定时/配置）。触发词: "arch audit", "架构审计", "arch-audit", "代码体检"
-allowed-tools: Read, Grep, Glob, Bash(git *), Bash(ls *), Bash(cat *), Bash(date *), Bash(mkdir *), Write, Edit, Agent, AskUserQuestion
+description: AI 代码体检，专门检测 LLM 写代码的常见反模式（命名漂移 / 错误处理偏置 / 依赖漏写 / 复用缺失 / 异步生命周期 / 守卫漏写）。触发词 "arch audit", "ai 代码体检", "llm 反模式", "arch-audit", "代码体检"
+allowed-tools: Read, Grep, Glob, Bash(git *), Bash(ls *), Bash(cat *), Bash(date *), Bash(mkdir *), Bash(find *), Write, Edit, Agent, AskUserQuestion
 ---
 
-# Arch Audit - 架构与规范审计
+# Arch Audit - AI 代码体检 / LLM 反模式审计
 
-> 审计清单: `<skill-path>/references/arch-audit-checklist.md`
+> 反模式知识库: `<skill-path>/references/arch-audit-checklist.md`
+> 待观察模式池: `<skill-path>/references/arch-audit-pending-patterns.md`
 > 报告模板: `<plugin-root>/templates/audit-report.md`
 
-针对"LLM 批量产出代码后想宏观体检"的场景。**先审计写报告，再可选地按报告逐项修复**。修复阶段全程逐项 ask 确认，可随时停止。
+针对"LLM 批量产出代码后不放心"的场景，**专门检测 LLM 写代码的可识别反模式**——不是通用代码质量审查。
+
+**定位**：
+
+- **找 LLM 特有的"指纹"**：跨文件命名漂移、复制粘贴漏改、依赖项漏写、各写各的（不查已有常量/工具）、happy path 偏置、复制 hook 漏改 deps、i18n / 类型守卫漏写……
+- **跨文件视角**：单文件 review 看不出的问题，arch-audit 视角能查
+- **持续演化的知识库**：每发现新反模式 → 写入「待观察池」→ 月度评审转正进 checklist
 
 与 `/fe-dev:code-review` 的边界：
 
 | | code-review | arch-audit |
 |---|---|---|
-| 视角 | 一行行看 diff | 抬头看全局 |
-| 关注 | bug、安全、语义错误 | 架构、规范、配置、重复、定时器、最佳实践 |
-| 输出 | 控制台行级报告 | `docs/audits/audit-{date}.md` 分章节落档 |
+| 视角 | 单文件 diff，行级 | 跨文件，模式级 |
+| 关注 | 通用代码质量、bug、安全 | LLM 反模式（人类很少这么写）|
+| 输出 | 控制台行级报告 | `docs/audits/audit-{date}.md` 落档 |
 | 时机 | commit 前 | LLM 批量产出后 / 周期性体检 |
+| 重叠 | 各种规则细节（响应式陷阱、watch 写法） | **不查通用规则**，专注 LLM 模式 |
+
+> 通用 Vue 最佳实践、项目配置合理性等**不在 arch-audit 范围**，请用 `/fe-dev:code-review` 或 ast-lint-mcp。
 
 ## 参数
 
 - `<scope>`: 可选，审计范围
-  - 不传（默认）— `--scope=diff`，审计工作区变更 + 最近 3 个 commit
+  - 不传（默认）— `--scope=diff`，审计工作区变更 + 未追踪 + 最近 3 个 commit
   - `--scope=diff` — 同上
-  - `--scope=feat` — **MVP 暂未实现**，提示用户走默认
-  - `--scope=all` — **MVP 暂未实现**，提示用户走默认
+  - `--scope=feat` — **暂未实现**
+  - `--scope=all` — **暂未实现**
 
 ## 使用方式
 
 ```
-/fe-dev:arch-audit                  # 审计最近改动（默认 diff 模式）
-/fe-dev:arch-audit --scope=diff     # 同上
+/fe-dev:arch-audit
+/fe-dev:arch-audit --scope=diff
 ```
 
-## 6 项检查维度
+## 6 个维度（LLM 反模式专项）
 
-| # | 维度 | diff 模式行为 |
-|---|------|---------------|
-| 1 | 技术架构 / 技术栈主流性 | 轻量：只看 diff 是否引入新依赖、新目录结构 |
-| 2 | CLAUDE.md 规则符合度 | 全量审：读取项目 CLAUDE.md 逐条比对变更 |
-| 3 | Vue（含 style）最佳实践 | 全量审：变更的 `.vue` 文件逐个核对 |
-| 4 | 公共常量提取 | 全量审：变更里的硬编码字面量是否该抽常量 |
-| 5 | 定时配置（cron/setInterval/轮询） | 全量审：变更里所有 timer 相关代码 |
-| 6 | 项目配置合理性 | 轻量：仅当 diff 涉及 `package.json`/`nuxt.config`/`tsconfig`/`eslint*`/`stylelint*`/`.husky/` 时审 |
+| # | 维度 | LLM 为什么常出问题 |
+|---|------|---|
+| 1 | **命名 & 字段一致性** | 跨文件独立生成，同概念命名漂移（userId / user_id / uid）；复制粘贴模板未完整改名 |
+| 2 | **错误处理与边界覆盖** | LLM 倾向 happy path，async 不 catch、空数组/null/边界条件省略 |
+| 3 | **依赖完整性** | useEffect / watch / computed / Pinia getter 的依赖项漏写；复制别人的 hook 没改 deps |
+| 4 | **常量与工具复用** | LLM 不主动查已有 `constants/` `utils/`，各写各的，跨文件重复 |
+| 5 | **定时与异步生命周期** | setInterval/setTimeout/订阅没清理；轮询无退避；竞态不取消 |
+| 6 | **守卫漏写**（CLAUDE.md / i18n / 类型） | 项目级硬规则漏遵守、硬编码文案、类型 any 逃逸 |
 
-完整规则见 `<skill-path>/references/arch-audit-checklist.md`。
+完整反模式 ID 化清单见 `<skill-path>/references/arch-audit-checklist.md`。
+
+## 知识库三态
+
+每个反模式在 checklist 中有状态：
+
+| 状态 | 含义 | 进入修复列表 |
+|---|---|---|
+| **已知**（known）| 经过验证、误报率低 | ✅ 进入 |
+| **待观察**（pending） | 命中次数不足 / 误报率未知 | ❌ 仅报告标注，不进修复 |
+| **已退役**（retired） | 误报率高、争议大 | ❌ 完全不查 |
+
+退役不删除，保留可追溯。
 
 ## 执行流程
 
@@ -58,51 +80,31 @@ git rev-parse --is-inside-work-tree
 
 非 git 仓库 → 报错退出。
 
-`--scope=feat` 或 `--scope=all` → 输出：
+`--scope=feat` / `--scope=all` → 输出"暂未实现，按 diff 模式继续"。
 
-```
-💡 MVP 阶段仅支持 --scope=diff（最近改动）。
-   --scope=feat / --scope=all 将在后续版本提供。
-```
+### 2. 收集变更范围
 
-然后按 `diff` 模式继续。
-
-### 2. 收集 diff 范围
-
-把 4 个来源**合并去重**得到 `<changed_files>`：
+4 个来源合并去重得 `<changed_files>`，**末尾过滤掉 `docs/audits/**`**：
 
 ```bash
-# 1. 工作区已修改（tracked）
-git diff --name-only
-
-# 2. 暂存区
-git diff --cached --name-only
-
-# 3. 未追踪但未被 .gitignore 排除（LLM 新建文件常落在这）
-git ls-files --others --exclude-standard
-
-# 4. 最近 N 个 commit（N = min(3, 仓库总 commit 数 - 1)）
-COMMIT_COUNT=$(git rev-list --count HEAD)
-if [ "$COMMIT_COUNT" -gt 3 ]; then
-  git diff --name-only HEAD~3 HEAD
-elif [ "$COMMIT_COUNT" -gt 1 ]; then
-  git diff --name-only HEAD~$((COMMIT_COUNT - 1)) HEAD
-else
-  git diff-tree --no-commit-id --name-only -r HEAD
-fi
+{
+  git diff --name-only
+  git diff --cached --name-only
+  git ls-files --others --exclude-standard
+  COMMIT_COUNT=$(git rev-list --count HEAD)
+  if [ "$COMMIT_COUNT" -gt 3 ]; then
+    git diff --name-only HEAD~3 HEAD
+  elif [ "$COMMIT_COUNT" -gt 1 ]; then
+    git diff --name-only HEAD~$((COMMIT_COUNT - 1)) HEAD
+  else
+    git diff-tree --no-commit-id --name-only -r HEAD
+  fi
+} | sort -u | grep -v '^docs/audits/'
 ```
 
-**为什么把未追踪文件也算进来**：LLM 写代码常先 `Write` 新建文件，这些文件处于 untracked 状态。如果只看 `git diff`，首次审计会把所有新增文件漏掉。
+无变更 → 「最近无变更，无需体检」退出。
 
-**排除自身产出物**：合并后过滤掉 `docs/audits/**`，避免审计报告自身被纳入下一次审计形成循环：
-
-```bash
-grep -v '^docs/audits/'
-```
-
-无变更 → 输出「最近无变更，无需审计」退出。
-
-### 3. 准备报告文件
+### 3. 准备报告
 
 ```bash
 mkdir -p docs/audits
@@ -110,145 +112,122 @@ DATE=$(date +%Y-%m-%d-%H%M)
 REPORT=docs/audits/audit-${DATE}.md
 ```
 
-**.gitignore 提示**：若 `.gitignore` 中没有 `docs/audits/`，**首次运行时**输出一次性提示：
+**.gitignore 首次提示**：若未包含 `docs/audits/`，输出一次性建议（不强制）。
 
-```
-💡 建议将 docs/audits/ 加入 .gitignore（个人体检记录，无需入库）。
-   团队需要追踪审计历史可忽略此提示。
-```
+**填充模板**：用 `Read` 读 `<plugin-root>/templates/audit-report.md`，替换占位符后用 `Write` 整体输出到 `$REPORT`：
 
-**填充模板**：
+| 占位符 | 替换为 |
+|---|---|
+| `{{DATE}}` | `date "+%Y-%m-%d %H:%M"` |
+| `{{SCOPE}}` | `diff` |
+| `{{COMMIT_HASH}}` | `git rev-parse --short HEAD` |
+| `{{BRANCH}}` | `git branch --show-current` |
+| `{{CHANGED_FILE_COUNT}}` | 列表条数 |
+| `{{CHANGED_FILES}}` | 列表，每行一个 |
+| `{{CLAUDE_MD_COUNT}}` | 找到的 CLAUDE.md 数量（步骤 4）|
 
-1. 用 `Read` 读取 `<plugin-root>/templates/audit-report.md` 作为骨架
-2. 替换以下占位符（用 `Write` 整体输出到 `$REPORT`，**不要**用 Edit 多次替换）：
-
-| 占位符 | 替换为 | 来源 |
-|---|---|---|
-| `{{DATE}}` | 当前日期时间 | `date "+%Y-%m-%d %H:%M"` |
-| `{{SCOPE}}` | `diff` | 当前参数值 |
-| `{{COMMIT_HASH}}` | 当前 HEAD short hash | `git rev-parse --short HEAD` |
-| `{{BRANCH}}` | 当前分支名 | `git branch --show-current` |
-| `{{CHANGED_FILE_COUNT}}` | 变更文件总数 | 第 2 步收集到的列表条数 |
-| `{{CHANGED_FILES}}` | 变更文件清单 | 第 2 步收集到的列表，每行一个 |
-| `{{CLAUDE_MD_STATUS}}` | `存在` / `不存在` | 第 4 步检测结果 |
-
-### 4. 读取所有适用的 CLAUDE.md（多层支持）
-
-monorepo / 插件仓库可能在子目录下存在子 CLAUDE.md（如 `fe-dev/CLAUDE.md` 只作用于 `fe-dev/**`）。处理逻辑：
+### 4. 找出所有适用 CLAUDE.md（多层）
 
 ```bash
-# 找出所有 CLAUDE.md（排除 node_modules / .git）
 find . -name 'CLAUDE.md' -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*'
 ```
 
-**作用域映射**：
+**作用域映射**：对每个 `<changed_files>` 文件，向上查找最近的 CLAUDE.md，作为维度 6 "守卫漏写"中 CLAUDE.md 子项的对比基线。无适用 CLAUDE.md → 该子项跳过。
 
-- `./CLAUDE.md` → 作用于整个仓库所有变更文件
-- `<dir>/CLAUDE.md` → 仅作用于 `<dir>/**` 下的变更文件
-- 多层嵌套时，**最近的 CLAUDE.md 优先**（子目录规则覆盖父目录）
+### 5. 逐维度审计（主线程串行）
 
-**判断流程**：对 `<changed_files>` 中每个文件，向上查找最近的 CLAUDE.md，作为第 2 项审计该文件时的对比基线。
+读取 `<skill-path>/references/arch-audit-checklist.md`，对每个维度的**"已知"状态条目**执行检测：
 
-**全无 CLAUDE.md** → 第 2 项标记「未找到任何 CLAUDE.md，跳过本项」。
-**部分文件无对应 CLAUDE.md** → 该文件在第 2 项标记"无适用 CLAUDE.md"，其余文件正常审。
-
-### 5. 逐项审计（主线程串行驱动）
-
-读取 `<skill-path>/references/arch-audit-checklist.md`，按 6 项顺序执行。
-
-**收集证据策略**：每项内部按需 grep / 读文件。如果某项要扫的文件 > 10 个，主线程**可派一个 `Explore` 子代理**去找证据，主线程拿回证据后自己组织措辞，保证报告风格一致。
-
-**置信度门槛**：与 `code-review-rules.md` 一致，只报告置信度 ≥ 80% 的问题，不猜测。
+- **证据收集**：按需 grep / 读文件；某维度涉及 > 10 文件时派 `Explore` 子代理
+- **置信度门槛**：≥ 80% 才报告
+- **状态过滤**：仅检测 **known** 状态条目；**pending** 仅做"提示性匹配"（命中也不报问题，只累计命中次数）；**retired** 完全跳过
 
 **严重度分级**：
 
-- 🔴 **critical**：内存泄漏、安全风险、严重违反 CLAUDE.md 硬规则
-- 🟡 **major**：可维护性差、最佳实践违反、需修复
-- 🔵 **minor**：建议性、风格偏好
-- ⚪ **architectural**：架构选型建议，**绝不自动改**，仅给人类决策参考
+- 🔴 critical：会引起 bug / 安全 / 数据损坏
+- 🟡 major：可维护性 / 一致性问题，需修
+- 🔵 minor：建议性
+- ⚪ architectural：架构选型类，**绝不自动改**
 
-**逐项完成后立即写入报告对应章节**：用 `Edit` 把该章节模板里的 "✅ 本维度未发现问题" 替换为实际问题清单，并更新顶部「总览」表格的对应行计数。不要全跑完再一次性写——避免中途出错丢失进度。
+**写入策略**：每维度完成后用 `Edit` 把模板章节中"✅ 本维度未发现问题"替换为实际内容，同时更新顶部「总览」表格对应行计数。
 
-### 6. 写入报告并输出摘要
+### 5b. 捕获新反模式（工具自演化机制）⭐
 
-报告写完后，控制台输出：
+逐维度审计的**同时**，主线程留意 `<changed_files>` 中**未被已有 checklist 条目命中**但**看起来像 LLM 反模式**的代码片段。例如：
+
+- 看到一个新的"复制粘贴指纹"（变量名一致但类型/上下文不符）
+- 看到一种 checklist 未列的依赖漏写形态
+- 看到一种新的硬编码模式（特定字段、特定格式）
+
+这些"疑似新模式"汇总到报告末尾的「**待观察模式候选**」段落，每条记录：
 
 ```
-✅ 架构审计完成
+- 文件: <path:line>
+- 现象: <一句话描述>
+- 建议归类: <维度 #>
+- 建议严重度: <critical/major/minor>
+```
+
+报告写完后，主线程**询问用户**是否把候选写入 `arch-audit-pending-patterns.md`（详见步骤 7b）。
+
+### 6. 输出摘要
+
+报告写完后控制台输出：
+
+```
+✅ AI 代码体检完成
 
 报告：docs/audits/audit-2026-05-14-1530.md
 
-汇总：
+汇总（已知反模式命中）：
   🔴 critical: N
   🟡 major:    N
   🔵 minor:    N
   ⚪ architectural（仅建议）: N
+
+待观察候选: M 条（未确认是否入池）
 ```
 
 ### 7. 询问是否进入修复阶段
 
-**前置条件**：critical + major 之和 > 0。否则跳过修复阶段，直接结束。
+**前置条件**：known 状态条目命中的 critical + major > 0。否则跳过修复直接走步骤 7b。
 
 调用 `AskUserQuestion`：
 
-- 问题：`审计完成（critical: N, major: N, minor: N）。是否立即修复 critical + major？`
+- 问题：`体检完成（critical: N, major: N, minor: N）。是否立即修复？`
 - 选项：
-  1. **修复 critical + major（推荐）** — 进入逐项修复
-  2. **仅修 critical** — 只修最严重的，major 保留在报告
-  3. **暂不修复** — 退出，自己看报告手动处理
+  1. **修复 critical + major（推荐）**
+  2. **仅修 critical**
+  3. **暂不修复**
 
-> minor 永不进入自动修复列表；architectural 同样不进入，仅保留在报告供人决策。
+> minor / architectural / pending / retired 永不进入修复列表。
 
-→ 用户选"暂不修复" → 输出"已生成报告，未做任何代码修改" 退出
-→ 用户选其他 → 进入第 8 步
+### 7b. 询问是否入"待观察池"
 
-### 8. 逐项修复（仅在用户同意修复后执行）
+若步骤 5b 抓到候选 > 0，调用 `AskUserQuestion`：
 
-按以下顺序组装修复列表：
-
-- 用户选 **"修复 critical + major"** → 列表 = 全部 critical（按路径排序）+ 全部 major（按路径排序）
-- 用户选 **"仅修 critical"** → 列表 = 全部 critical，**major 项整批跳过保留在报告**
-- minor 和 architectural **任何情况下都不进列表**
-
-对列表中每一项执行：
-
-#### 8.1 输出问题摘要
-
-```
-[N/总数] 🔴 critical | path/to/file.vue:42
-问题：<问题描述>
-计划修改：<即将执行的修改概述>
-```
-
-#### 8.2 应用修改
-
-- 用 `Read` 读目标文件确认上下文
-- 用 `Edit` 应用修改
-- **关键**：记录每次 Edit 的 `old_string` 和 `new_string`，用于后续撤销
-
-#### 8.3 输出 diff 摘要
-
-简短列出本次修改的文件、行数变化、关键变更。
-
-#### 8.4 询问用户处置
-
-调用 `AskUserQuestion`：
-
-- 问题：`此项修改是否保留？（剩余 M 项）`
+- 问题：`本次发现 M 条疑似新反模式，是否写入 arch-audit-pending-patterns.md 待观察？`
 - 选项：
-  1. **保留并继续下一项（推荐）** — 进入下一项
-  2. **撤销此项** — 反向 Edit 回退，继续下一项
-  3. **保留并停止剩余项** — 不再修后面的项，结束本次修复
-  4. **撤销此项并停止剩余项** — 撤销当前 + 不再修后面，结束
+  1. **全部写入待观察池（推荐）** — append 到 pending 文件，每条分配 P-NNN 编号
+  2. **挑选写入** — 主线程逐条 ask（仅在 M ≤ 5 时使用，避免过多打断）
+  3. **不写入** — 仅保留在本次报告，不入池
 
-**撤销实现**：
-反向调用 `Edit`，把记录的 `new_string` 作为 old，记录的 `old_string` 作为 new，精准回到改前状态。**不要**用 `git checkout`（会冲掉用户原本的其他未提交改动）。
+**写入 pending 时**：每条 append 到 `arch-audit-pending-patterns.md` 的"## 待观察"段落，初始命中数 = 1，首次发现日期 = 今天。
 
-#### 8.5 循环到列表末尾或用户停止
+> 月度评审：人工查看 pending 池，命中次数 ≥ 3 且误报低的模式，迁移到 checklist 转正为 known。
+
+### 8. 逐项修复（同 v1）
+
+修复列表 = critical（按路径排序）+ major（如用户选了"critical + major"）。
+
+每项：
+- 8.1 输出问题摘要
+- 8.2 应用 `Edit`，记录 old_string / new_string
+- 8.3 输出 diff 摘要
+- 8.4 `AskUserQuestion`：保留续 / 撤销续 / 保留停 / 撤销停
+- 撤销 = 反向 Edit（**不**用 `git checkout`）
 
 ### 9. 修复总结
-
-修复阶段结束后输出：
 
 ```
 ✅ 修复阶段结束
@@ -258,22 +237,29 @@ find . -name 'CLAUDE.md' -not -path '*/node_modules/*' -not -path '*/.git/*' -no
   ↩ 撤销：N 项
   ⏸ 跳过（用户停止）：N 项
 
-下一步建议：
-  - 查看 git diff 复核所有保留的修改
-  - 跑测试 / 启动 dev server 验证功能正常
-  - 满意后 /fe-dev:commit 提交
+待观察池新增：M 条（编号 P-XXX ~ P-YYY）
+
+下一步：
+  - 查看 git diff 复核保留的修改
+  - 跑测试 / 启动 dev server 验证
+  - /fe-dev:commit 提交
+  - 月度 review arch-audit-pending-patterns.md，把高频模式转正进 checklist
 ```
 
-**注意**：本次审计报告**不会更新**已修项的状态。若想看修复后的最新报告，重新跑一次 `/fe-dev:arch-audit` 即可（新 diff 范围已是修复后的状态）。
+## 设计原则
 
-## MVP 范围声明
+1. **不与 code-review 重叠**：通用代码质量交给 code-review / ast-lint-mcp，arch-audit 专注"LLM 指纹"
+2. **维度数量稳定**：6 个维度长期不变，规则在维度内累加，避免维度膨胀
+3. **三态管理**：known / pending / retired，让 checklist 自洁，不会越积越脏
+4. **自演化**：每次审计可捕获新模式入 pending，月度评审转正；工具越用越准
+5. **知识库即资产**：`arch-audit-checklist.md` 可版本化、跨项目复用、社区贡献
 
-本版本（MVP）支持：审计 + 同会话内逐项修复（critical + major）。**不支持**：
+## 范围声明
 
-- `--scope=feat` / `--scope=all` 两档范围
-- 修复状态持久化 / 断点续传（停下后未修项保留在报告作为人工提醒）
-- 历史对比：读取上一份报告 diff critical/major 数量，给出趋势
-- 与 `/fe-dev:commit` 集成：`--audit` 参数前置体检
-- 修复后自动重审验证
+支持：审计 + 同会话逐项修复 + 新模式入待观察池。**不支持**：
 
-后续根据使用反馈再决定是否扩展。
+- `--scope=feat` / `--scope=all`
+- 修复状态持久化 / 断点续传
+- 报告间历史对比 / 趋势
+- 自动把 pending 转正为 known（需人工月度评审）
+- 修复后自动重审
