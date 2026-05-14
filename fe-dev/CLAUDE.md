@@ -6,7 +6,7 @@
 
 - **项目初始化**: `/fe-dev:init`、`/fe-dev:claude-init`
 - **Feature 工作流**: `/fe-dev:feat-new` → `feat-req` → `feat-design`（可选）→ `feat-gen` → `feat-exec` → `feat-done` → `feat-archive`
-- **代码审查与提交**: `/fe-dev:code-review`、`/fe-dev:commit`（`--push` 可推送）、`/fe-dev:gitee-pr`
+- **代码审查与提交**: `/fe-dev:code-review`（行级 diff）、`/fe-dev:arch-audit`（宏观体检）、`/fe-dev:commit`（`--push` 可推送）、`/fe-dev:gitee-pr`
 - **UI 设计稿**: `/fe-dev:ui-setup` → `ui-add` → `ui-gen` → `ui-check`
   - 查看: `/fe-dev:ui`
   - 更新: `/fe-dev:ui-update`
@@ -48,3 +48,4 @@ Nuxt 4 + Vue 3 + TypeScript + Element Plus + Tailwind CSS + Scoped SCSS + Pinia
 - `references/feat-utils.md` — feat-* 系列共享命令和路径
 - `references/ui-utils.md` — UI 系列共享约定和 API 调用
 - `references/code-review-rules.md` — 代码审查规则清单（Vue 3 + Nuxt 4）
+- `references/arch-audit-checklist.md` — 架构审计 6 维度规则（与 code-review 互补）

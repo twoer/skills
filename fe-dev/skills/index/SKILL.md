@@ -39,6 +39,15 @@ allowed-tools: Read, Grep, Glob
 | `/fe-dev:feat-done <name>` | 标记功能完成 |
 | `/fe-dev:feat-archive <name>` | 归档已完成的功能 |
 
+### 代码审查与提交
+
+| 命令 | 说明 |
+|------|------|
+| `/fe-dev:code-review` | 代码审查（行级 diff，ast-lint + 语义） |
+| `/fe-dev:arch-audit` | 架构审计（6 维度宏观体检），输出到 `docs/audits/` |
+| `/fe-dev:commit` | 代码审查 + 提交（`--push` 可推送） |
+| `/fe-dev:gitee-pr` | 通过浏览器自动创建 Gitee PR |
+
 ### UI 设计稿
 
 | 命令 | 说明 |

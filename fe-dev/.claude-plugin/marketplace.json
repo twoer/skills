@@ -9,7 +9,7 @@
     {
       "name": "fe-dev",
       "description": "Frontend development assistant for project initialization and feature workflow management",
-      "version": "3.7.0",
+      "version": "3.8.0",
       "source": "./",
       "author": {
         "name": "zhangkun",
